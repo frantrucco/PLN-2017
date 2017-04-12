@@ -143,6 +143,25 @@ class NGramGenerator:
 
     def generate_sent(self):
         """Randomly generate a sentence."""
+        n = self.n
+        # Add (n-1) opening tags to start the generation
+        sentence = ['<s>'] * (n - 1)
+
+        while True:
+            # Use the last (n-1) tokens from sentence.
+            # If n == 0, take []
+            prev_tokens = sentence[-(n-1) or len(sentence):]
+
+            predicted_token = self.generate_token(tuple(prev_tokens))
+
+            # Do not append the closing tag
+            if predicted_token == '</s>':
+                break
+            sentence.append(predicted_token)
+
+        # Delete (n-1) opening tags previously added
+        sentence = sentence[n-1:]
+        return sentence
 
     def generate_token(self, prev_tokens=None):
         """Randomly generate a token, given prev_tokens.
