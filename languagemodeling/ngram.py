@@ -102,8 +102,20 @@ class NGramGenerator:
         model -- n-gram model.
         """
         self.n = n = model.n
+
         self.probs = probs = {}
+        """A dictionary that maps from (n-1)gram keys to a dictionary that maps
+        from tokens to probabilities. Thus, the probability of the token token
+        given that prev_tokens are before token is probs[prev_tokens][token].
+        """
+
         self.sorted_probs = sorted_probs = {}
+        """Same as probs but the next tokens probabilities are sorted with the
+        following order:
+        - First, sort by the probability (descending)
+        - Second, sort by lexicographical order the tokens (ascending)
+        """
+
         ngrams = [ngram for ngram in model.counts.keys() if len(ngram) == n]
 
         for ngram in ngrams:
@@ -115,11 +127,19 @@ class NGramGenerator:
             prob_last_token = model.cond_prob(last_token, list(prev_tokens))
             probs[prev_tokens][last_token] = prob_last_token
 
+        # Sort using the following order:
+        # - First, sort by the probability (descending)
+        # - Second, sort by lexicographical order the tokens (ascending)
+        # Which is equivalent to using a key that swaps tuple elements and
+        # makes all probabilities negative and sorting that list of tuples
+        # using the following order:
+        # - First, sort by the first component (ascending)
+        # - Second, sort by the second component (ascending)
+        # This is the default ordering for tuples thus we can sort each token
+        # using:
         for prev_tokens in probs.keys():
             sorted_probs[prev_tokens] = sorted(probs[prev_tokens].items(),
                                                key=lambda x: (-x[1], x[0]))
-
-
 
     def generate_sent(self):
         """Randomly generate a sentence."""
