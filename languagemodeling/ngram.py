@@ -119,7 +119,7 @@ class NGramGenerator:
         ngrams = [ngram for ngram in model.counts.keys() if len(ngram) == n]
 
         for ngram in ngrams:
-            probs[self._take_prev_tokens(ngram)] = {}
+            probs[ngram[:n - 1]] = {}
 
         for ngram in ngrams:
             prev_tokens = ngram[:n - 1]
