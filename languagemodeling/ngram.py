@@ -101,6 +101,25 @@ class NGramGenerator:
         """
         model -- n-gram model.
         """
+        self.n = n = model.n
+        self.probs = probs = {}
+        self.sorted_probs = sorted_probs = {}
+        ngrams = [ngram for ngram in model.counts.keys() if len(ngram) == n]
+
+        for ngram in ngrams:
+            probs[self._take_prev_tokens(ngram)] = {}
+
+        for ngram in ngrams:
+            prev_tokens = ngram[:n - 1]
+            last_token = ngram[n - 1]
+            prob_last_token = model.cond_prob(last_token, list(prev_tokens))
+            probs[prev_tokens][last_token] = prob_last_token
+
+        for prev_tokens in probs.keys():
+            sorted_probs[prev_tokens] = sorted(probs[prev_tokens].items(),
+                                               key=lambda x: (-x[1], x[0]))
+
+
 
     def generate_sent(self):
         """Randomly generate a sentence."""
