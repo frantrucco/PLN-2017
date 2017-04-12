@@ -196,3 +196,46 @@ que luego utiliza para tokenizar las oraciones.
 
 
 
+
+## Ejercicio 2
+
+### Count ```count(self, tokens)```
+
+Este método simplemente devuelve la cantidad de apariciones de un n-grama o un
+(n-1)-grama. Como dicha cantidad ya fue implementada en el constructor, no es
+necesario hacer otra cosa que devolver el valor.
+
+### Agregar tags ```_add_tags(self, sent)```
+Simplemente agrega (n-1) tags de apertura al principio de la oración y un tag de
+cierre.
+
+### Probabilidad de la oración ```sent_prob(self, sent)```
+Esta función calcula el producto de las probabilidades condicionales de cada uno
+de los ngrams que forman los tokens de la oración dada. Para lograr esto, se
+agregan los tags a la oración y se multiplican las probabilidades condicionales
+de cada uno de los tokens dado que han ocurrido los (n-1) tokens anteriores.
+
+### Probabilidad logarítmica de la oración ```sent_log_prob(self, sent)```
+Análogo a sent_prob pero en vez de un producto es una suma de los logaritmos de
+las probabilidades condicionales de cada uno de los tokens dado que han
+ocurrido los (n-1) tokens anteriores.
+
+### Problema con la probabilidad y la probabilidad logarítmica de la oración
+Ambas funciones pueden causar una división por 0 si no se implementan
+cuidadosamente. Para evitar esto basta hacer un ```break``` en caso de
+encontrarse con un token cuya probabilidad condicional haya resultado ser 0 como
+se indica en el código:
+
+```
+for i in range(n - 1, len(sent)):
+    if probability == 0:
+        # If the previous token has zero probability, then a call to
+        # cond_prob will cause a division by zero, break here to avoid
+        # that.
+        break
+    probability *= self.cond_prob(sent[i], sent[i - n + 1: i])
+```
+
+Análogo es el caso de la probabilidad logarítmica, pero resultando en una
+probabilidad -infinita (pues se está calculando el logaritmo de las
+probabilidades condicionales).
