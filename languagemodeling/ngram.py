@@ -149,3 +149,13 @@ class NGramGenerator:
 
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
         """
+        choices = self.sorted_probs[prev_tokens]
+        r = uniform(0, 1)
+        cumulative_probability = 0
+        # Sum all probabilities until the cumulative probability is bigger than
+        # the random number.
+        for choice, probability in choices:
+            if cumulative_probability + probability >= r:
+                return choice
+            cumulative_probability += probability
+        assert False, 'This should never be reached'
