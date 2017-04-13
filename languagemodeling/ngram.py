@@ -77,10 +77,7 @@ class NGram(object):
 
         sent -- the sentence as a list of tokens.
         """
-        def log_2(x):
-            if x != 0:
-                return log(x, 2)
-            return float('-inf')
+        def log2(x): return log(x, 2) if x != 0 else float('-inf')
 
         n = self.n
         probability = 0
@@ -92,7 +89,7 @@ class NGram(object):
                 # cond_prob will cause a division by zero, break here to avoid
                 # that.
                 break
-            probability += log_2(self.cond_prob(sent[i], sent[i - n + 1: i]))
+            probability += log2(self.cond_prob(sent[i], sent[i - n + 1: i]))
         return probability
 
     def log_prob(self, sents):
