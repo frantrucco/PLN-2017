@@ -100,7 +100,7 @@ class NGram(object):
 
         sents -- list of sentences to compute the sum of log probability
         """
-        return sum(map(self.sent_prob, sents))
+        return sum(map(self.sent_log_prob, sents))
 
     def cross_entropy(self, sents):
         """ Compute the cross entropy of sents.
