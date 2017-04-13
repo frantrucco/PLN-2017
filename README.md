@@ -332,10 +332,23 @@ Retiráronse algunas monjas; yo sentí el tenue chocar de las medallas de sus
 rosarios cuando levantaban la rodilla, y le preguntó lo que tenía que hacer.
 ```
 
-
-
-
 ## Ejercicio 4
+### Clase AddOneNGram
+#### Constructor
+Esta clase se diferencia de la clase madre ```NGram``` porque tiene un miembro más
+(además de tener una definición diferente de probabilidad condicional y tener el
+método ```V()```): ```vocabulary``` que guarda el conjunto de los tokens que
+aparecen en las oraciones.
+
+#### Probabilidad condicional
+Para implementar este método simplemente se utilizó la formula dada en el
+teórico de la probabilidad condicional con suavizado de Laplace en vez de usar
+la de probabilidad condicional sin ningún tipo de suavizado.
+
+#### Sobre los resultados del entrenamiento
+Los modelos de lenguaje resultantes no fueron guardados en el repositorio para
+evitar problemas con el tamaño del mismo (git no está hecho para cargar archivos
+de mucho tamaño).
 
 ## Ejercicio 5
 ## Referencias
