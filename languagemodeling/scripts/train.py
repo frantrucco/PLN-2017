@@ -14,14 +14,15 @@ import pickle
 
 from languagemodeling.ngram import NGram
 
-from corpus.summat import summat
+# from corpus.summat import summat as corpus
+from corpus.galdos import galdos as corpus
 
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
     # load the data
-    sents = summat.sents()
+    sents = corpus.sents()
 
     # train the model
     n = int(opts['-n'])
