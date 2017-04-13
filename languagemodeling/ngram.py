@@ -95,6 +95,27 @@ class NGram(object):
             probability += log_2(self.cond_prob(sent[i], sent[i - n + 1: i]))
         return probability
 
+    def log_prob(self, sents):
+        """Compute the sum of the log probabilities of sents.
+
+        sents -- list of sentences to compute the sum of log probability
+        """
+        return sum(map(self.sent_prob, sents))
+
+    def cross_entropy(self, sents):
+        """ Compute the cross entropy of sents.
+
+        sents -- sentences to compute the cross entropy
+        """
+        return self.log_prob(sents) / sum(map(len, sents))
+
+    def perplexity(self, sents):
+        """Compute the perplexity of sents.
+
+        sents -- sentences to compute the perplexity
+        """
+        return 2 ** (-self.cross_entropy(sents))
+
 
 class NGramGenerator:
 
