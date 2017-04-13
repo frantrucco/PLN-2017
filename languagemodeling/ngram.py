@@ -179,3 +179,41 @@ class NGramGenerator:
                 return choice
             cumulative_probability += probability
         assert False, 'This should never be reached'
+
+class AddOneNGram(NGram):
+
+    def __init__(self, n, sents):
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        """
+        NGram.__init__(self, n, sents)
+        wordList = [w for s in sents for w in s]
+        self.vocabulary = set(wordList)
+
+        self.vocabulary.discard('<s>')
+        self.vocabulary.discard('</s>')
+
+    def V(self):
+        """
+        Size of the vocabulary.
+        """
+        return len(self.vocabulary) + 1
+
+    def cond_prob(self, token, prev_tokens=None):
+        """Conditional probability of a token.
+
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        n = self.n
+        V = self.V()
+
+        if not prev_tokens:
+            prev_tokens = []
+
+        assert len(prev_tokens) == n - 1
+
+        tokens = tuple(prev_tokens + [token])
+        prev_tokens = tuple(prev_tokens)
+        return ((self.counts[tokens]) + 1.0) / (self.counts[prev_tokens] + V)
