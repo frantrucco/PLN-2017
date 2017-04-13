@@ -59,6 +59,40 @@ class TestNGram(TestCase):
         for gram, c in counts.items():
             self.assertEqual(ngram.count(gram), c)
 
+    def test_count_3gram(self):
+        ngram = NGram(3, self.sents)
+
+        counts = {
+            ('<s>', '<s>'): 2,
+            ('<s>', 'el'): 1,
+            ('el', 'gato'): 1,
+            ('gato', 'come'): 1,
+            ('come', 'pescado'): 1,
+            ('pescado', '.'): 1,
+
+            ('<s>', 'la'): 1,
+            ('la', 'gata'): 1,
+            ('gata', 'come'): 1,
+            ('come', 'salmón'): 1,
+            ('salmón', '.'): 1,
+
+            ('<s>', '<s>', 'el'): 1,
+            ('<s>', 'el', 'gato'): 1,
+            ('el', 'gato', 'come'): 1,
+            ('gato', 'come', 'pescado'): 1,
+            ('come', 'pescado', '.'): 1,
+            ('pescado', '.', '</s>'): 1,
+
+            ('<s>', '<s>', 'la'): 1,
+            ('<s>', 'la', 'gata'): 1,
+            ('la', 'gata', 'come'): 1,
+            ('gata', 'come', 'salmón'): 1,
+            ('come', 'salmón', '.'): 1,
+            ('salmón', '.', '</s>'): 1,
+        }
+        for gram, c in counts.items():
+            self.assertEqual(ngram.count(gram), c)
+
     def test_cond_prob_1gram(self):
         ngram = NGram(1, self.sents)
 
