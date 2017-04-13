@@ -188,8 +188,7 @@ class AddOneNGram(NGram):
         sents -- list of sentences, each one being a list of tokens.
         """
         NGram.__init__(self, n, sents)
-        wordList = [w for s in sents for w in s]
-        self.vocabulary = set(wordList)
+        self.vocabulary = {w for s in sents for w in s}
 
         self.vocabulary.discard('<s>')
         self.vocabulary.discard('</s>')
