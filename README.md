@@ -239,3 +239,105 @@ for i in range(n - 1, len(sent)):
 Análogo es el caso de la probabilidad logarítmica, pero resultando en una
 probabilidad -infinita (pues se está calculando el logaritmo de las
 probabilidades condicionales).
+
+## Ejercicio 3
+### NGramGenerator
+#### Constructor
+Crea ```probs``` y ```sorted_probs```. Estos diccionarios contienen como keys
+los (n-1)-gramas y como values diccionarios (o listas de tuplas) que dado un
+token devuelven la probabilidad condicional de que ese token ocurra sabiendo que
+los tokens del (n-1)-grama ya ocurrieron. Es decir
+prob[prev_token] guarda un diccionario de todos los tokens que le siguen a
+prev_token en alguna parte del corpus y con qué probabilidad.
+
+#### Generar token
+Se utilizó un algoritmo de selección de ruleta[^n] para elegir el token basado
+en los tokens previos.
+
+#### Generar oración
+Para generar una oración simplemente se siguieron los siguientes pasos:
+- Crear una oración con (n-1) tags de apertura para tener suficiente tokens para
+  predecir la siguiente palabra.
+- Tomar los (n-1) últimos tokens de la oración, predecir la siguiente palabra
+  usando esos tokens y agregar esta palabra al final de la oración.
+- Repetir el paso anterior hasta obtener una oración completa (i.e., hasta
+  predecir el tag </s>).
+- Eliminar los tags de la oración.
+
+### Generando oraciones con el corpus galdos
+Se cambió de corpus para usar un corpus en español (el corpus anterior estaba en
+inglés pero tenía muchas abreviaciones que permitía experimentar con expresiones
+regulares).
+
+#### N = 1
+
+```
+de una soy el con serie criada parecía a usted toque
+
+, impido á de, lo la a a nada. ansiados porque historia
+
+Amalia dejando acecho) _Pituso_ en. - una volver hasta --¿de? voy profunda y la
+sedas al tenían de Trono estable desgraciada. y con se hay exclamar concurrencia
+y tan honor he en duda del esposa estas que. --¡
+
+la desocupa Tu revolverse de quedará
+```
+
+#### N = 2
+
+```
+Algunos heridos.
+
+« Pero hazte cuenta, ya no lo temí y decía más horrible calzado.
+
+Y positivamente sería?...
+
+— repuso Morton volvió airada que no la sombrilla rayas en el tesoro, qué tal
+modo más.
+
+Cerca de aguas reptiles de sus facciones como yo, hízolo jirones de aquel cutis
+moreno, Ilustrísimo Señor Jesucristo, señor cura — Se da consejos.
+```
+
+#### N = 3
+
+```
+-- Hombre, sí.
+
+Y esto es luz.
+
+He podido llegar a estarlo, murmuró muy a menudo; pero me sienta mejor.
+
+Para pagar con desahogo, hija...-- replicó _doña Desdémona_ le hizo estremecer
+al curita.
+
+Una les echaba una cazuela de agua, acudieron tempranito a coger el mantón para
+ir a casa... ¡Ja ja ja!...».
+```
+
+#### N = 4
+```
+--¡Otra asonada!
+
+Dejose conducir hasta la puerta el pobre D. Paco, el cual cayó enfermo y... cosa
+rara, sonándola y dando a conocer, con bárbaro modo, su ardiente anhelo de
+conocer este beatífico estado, y disculpo á las personas.
+
+--¡Yo!-- exclamó el chico con la mayor satisfacción -- que usted no me saca en
+bien de la cabeza.
+
+¿A qué conturbar su felicidad, calló y su boca traía bosquejada una sonrisa.
+
+Retiráronse algunas monjas; yo sentí el tenue chocar de las medallas de sus
+rosarios cuando levantaban la rodilla, y le preguntó lo que tenía que hacer.
+```
+
+
+
+
+## Ejercicio 4
+
+## Ejercicio 5
+## Referencias
+
+[^n]: http://stackoverflow.com/questions/3679694/a-weighted-version-of-random-choice
