@@ -30,12 +30,12 @@ if __name__ == '__main__':
 
     # Train the model
     n = int(opts['-n'])
-    modelType = opts['-m']
+    model_type = opts['-m']
 
     # Choose an ngram or addone
-    if modelType in ['ngram', None]:
+    if model_type in ['ngram', None]:
         model = NGram(n, sents)
-    if modelType == 'addone':
+    if model_type == 'addone':
         model = AddOneNGram(n, sents)
     else:
         print(__doc__)

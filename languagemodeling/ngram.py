@@ -61,8 +61,8 @@ class NGram(object):
         probability = 1
         sent = self._add_tags(sent)
 
-        # Multiply the conditional probabilities of every token given that (n-1)
-        # previous tokens occurred
+        # Multiply the conditional probabilities of every token given that
+        # (n-1) previous tokens occurred
         for i in range(n - 1, len(sent)):
             if probability == 0:
                 # If the previous token has zero probability, then a call to
@@ -200,6 +200,7 @@ class NGramGenerator:
                 return choice
             cumulative_probability += probability
         assert False, 'This should never be reached'
+
 
 class AddOneNGram(NGram):
 
