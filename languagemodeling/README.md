@@ -22,6 +22,12 @@ continuación se muestran algunos ejemplos de las mismas:
     dom
 ```
 
+Para resolver este problema se implementó una clase SummatCorpusReader que
+hereda de PlaintextCorpusReader. Esta clase extrae abreviaciones del corpus para
+generar un tokenizador de oraciones Punkt (PunktSentenceTokenizer). La ventaja
+de usar PunktSentenceTokenizer es que permite proveerle un conjunto de
+abreviaciones que luego utiliza para tokenizar las oraciones.
+
 Tres expresiones regulares fueron usadas para extraer las abreviaciones:
 
 ```
@@ -41,7 +47,10 @@ Como se puede notar hay tres tipos de abreviaciones:
   matchea números romanos de verdad pues se priorizó la legibilidad de la misma)
 - Que aparecen antes de un paréntesis
 
-### Paréntesis:
+A continuación mostramos los resultados obtenidos de cada uno de ellas luego del
+procesamiento:
+
+### Antes de un paréntesis:
 #### Cantidad encontrada: 77
 
 ```
@@ -57,7 +66,7 @@ Como se puede notar hay tres tipos de abreviaciones:
     'virg']
 ```
 
-### Números:
+### Antes de un número:
 #### Cantidad encontrada: 96
 
 ```
@@ -73,7 +82,7 @@ Como se puede notar hay tres tipos de abreviaciones:
     'tract', 'viii', 'wis', 'xii', 'xviii', 'zech']
 ```
 
-### Números Romanos:
+### Antes de un número romano:
 #### Cantidad encontrada: 190
 
 ```
@@ -103,9 +112,11 @@ Como se puede notar hay tres tipos de abreviaciones:
     'virgin', 'vit', 'viz']
 ```
 
-La mejora puede notarse al comparar la versión sin las abreviaciones:
+### Comparación sin/con abreviaciones
+La mejora luego de agregar las abreviaciones al lector de corpus puede notarse
+al comparar la versión sin las abreviaciones con la versión con:
 
-
+#### Sin abreviaciones
 ```
 Now it has been stated above ( A .
 
@@ -153,8 +164,8 @@ ordained to but one proximate end , from which it has its species : but it can
 be ordained to several remote ends , of which one is the end of the other .
 ```
 
-con la versión que sí las tiene:
 
+#### Con abreviaciones
 ```
 Now it has been stated above ( A . 1 ) that acts are called human , inasmuch as
 they proceed from a deliberate will .
@@ -187,15 +198,6 @@ agent , is ordained to but one proximate end , from which it has its species :
 but it can be ordained to several remote ends , of which one is the end of the
 other .
 ```
-
-Se implementó una clase SummatCorpusReader que hereda de PlaintextCorpusReader.
-Esta clase utiliza las abreviaciones extraídas del corpus para generar un
-tokenizador de oraciones Punkt (PunktSentenceTokenizer). La ventaja de usar
-PunktSentenceTokenizer es que permite proveerle un conjunto de abreviaciones
-que luego utiliza para tokenizar las oraciones.
-
-
-
 
 ## Ejercicio 2
 
@@ -351,6 +353,19 @@ evitar problemas con el tamaño del mismo (git no está hecho para cargar archiv
 de mucho tamaño).
 
 ## Ejercicio 5
+Los resultados obtenidos fueron los siguientes:
+
+### AddOneNGram
+
+| N | Cross Entropy | Perplexity |
+|---|---------------|------------|
+| 1 |        -10.52 |       1463 |
+| 2 |        -12.49 |       5744 |
+| 3 |         15.24 |      38537 |
+| 4 |        -15.90 |      61219 |
+
+Éste pareciera no ser un buen modelo de lenguaje.
+
 ## Referencias
 
 [^n]: http://stackoverflow.com/questions/3679694/a-weighted-version-of-random-choice
