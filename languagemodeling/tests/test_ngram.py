@@ -115,6 +115,21 @@ class TestNGram(TestCase):
         for (token, prev), p in probs.items():
             self.assertEqual(ngram.cond_prob(token, [prev]), p)
 
+    def test_cond_prob_3gram(self):
+        ngram = NGram(3, self.sents)
+
+        probs = {
+            ('pescado', ('gato', 'come')): 1,
+            ('salmón', ('gata', 'come')): 1,
+            ('salmón', ('gato', 'come')): 0.0,
+            ('salame', ('gata', 'come')): 0.0,
+            ('el', ('<s>', '<s>')): 0.5,
+            ('la', ('<s>', '<s>')): 0.5,
+            ('gato', ('<s>', '<s>')): 0,
+        }
+        for (token, prev), p in probs.items():
+            self.assertEqual(ngram.cond_prob(token, list(prev)), p)
+
     def test_sent_prob_1gram(self):
         ngram = NGram(1, self.sents)
 
