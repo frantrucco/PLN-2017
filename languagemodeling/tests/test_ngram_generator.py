@@ -139,3 +139,17 @@ class TestNGramGenerator(TestCase):
         for i in range(100):
             sent = generator.generate_sent()
             self.assertTrue(' '.join(sent) in sents, sent)
+
+    def test_generate_sent_3gram(self):
+        ngram = NGram(3, self.sents)
+        generator = NGramGenerator(ngram)
+
+        # all the possible generated sentences for 3-grams:
+        sents = [
+            'el gato come pescado .',
+            'la gata come salmón .',
+        ]
+
+        for i in range(100):
+            sent = generator.generate_sent()
+            self.assertTrue(' '.join(sent) in sents, sent)
