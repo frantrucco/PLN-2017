@@ -123,6 +123,21 @@ class TestAddOneNGram(TestCase):
         for (token, prev), p in probs.items():
             self.assertEqual(model.cond_prob(token, [prev]), p)
 
+    def test_cond_prob_3gram(self):
+        model = AddOneNGram(3, self.sents)
+
+        probs = {
+            ('pescado', ('gato', 'come')): (1.0 + 1.0) / (1.0 + 9.0),
+            ('salmón', ('gata', 'come')): (1.0 + 1.0) / (1.0 + 9.0),
+            ('salmón', ('gato', 'come')): (0.0 + 1.0) / (1.0 + 9.0),
+            ('salame', ('gata', 'come')): (0.0 + 1.0) / (1.0 + 9.0),
+            ('el', ('<s>', '<s>')): (1.0 + 1.0) / (2.0 + 9.0),
+            ('la', ('<s>', '<s>')): (1.0 + 1.0) / (2.0 + 9.0),
+            ('gato', ('<s>', '<s>')): (0.0 + 1.0) / (2.0 + 9.0),
+        }
+        for (token, prev), p in probs.items():
+            self.assertEqual(model.cond_prob(token, list(prev)), p)
+
     def test_norm_1gram(self):
         model = AddOneNGram(1, self.sents)
 
