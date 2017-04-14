@@ -253,8 +253,9 @@ prob[prev_token] guarda un diccionario de todos los tokens que le siguen a
 prev_token en alguna parte del corpus y con qué probabilidad.
 
 #### Generar token
-Se utilizó un algoritmo de selección de ruleta[^n] para elegir el token basado
-en los tokens previos.
+Se utilizó un algoritmo de selección de
+[ruleta](https://stackoverflow.com/a/3679747/6179183)
+para elegir el token basado en los tokens previos.
 
 #### Generar oración
 Para generar una oración simplemente se siguieron los siguientes pasos:
@@ -366,6 +367,4 @@ Los resultados obtenidos fueron los siguientes:
 
 Éste pareciera no ser un buen modelo de lenguaje.
 
-## Referencias
-
-[^n]: http://stackoverflow.com/questions/3679694/a-weighted-version-of-random-choice
+[^n]: 
