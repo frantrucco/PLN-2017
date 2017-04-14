@@ -1,6 +1,6 @@
 # https://docs.python.org/3/library/unittest.html
 from unittest import TestCase
-from math import log
+from math import log2
 
 from languagemodeling.ngram import NGram
 
@@ -178,7 +178,6 @@ class TestNGram(TestCase):
     def test_sent_log_prob_1gram(self):
         ngram = NGram(1, self.sents)
 
-        log2 = lambda x: log(x, 2)
         sents = {
             # 'come', '.' and '</s>' have prob 1/6, the rest have 1/12.
             'el gato come pescado .': 3 * log2(1 / 6.0) + 3 * log2(1 / 12.0),
@@ -192,7 +191,6 @@ class TestNGram(TestCase):
     def test_sent_log_prob_2gram(self):
         ngram = NGram(2, self.sents)
 
-        log2 = lambda x: log(x, 2)
         sents = {
             # after '<s>': 'el' and 'la' have prob 0.5.
             # after 'come': 'pescado' and 'salmón' have prob 0.5.
