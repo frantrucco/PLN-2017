@@ -141,7 +141,8 @@ class TestNGram(TestCase):
             'la la la': (1 / 6.0)**1 * (1 / 12.0)**3,
         }
         for sent, prob in sents.items():
-            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob, msg=sent)
+            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob,
+                                   msg=sent)
 
     def test_sent_prob_2gram(self):
         ngram = NGram(2, self.sents)
@@ -157,23 +158,34 @@ class TestNGram(TestCase):
             'la la la': 0.0,  # 'la' after 'la' unseen
         }
         for sent, prob in sents.items():
-            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob, msg=sent)
+            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob,
+                                   msg=sent)
 
     def test_sent_prob_3gram(self):
         ngram = NGram(3, self.sents)
 
         sents = {
             # after '<s>', '<s>': 'el' and 'la' have prob 0.5.
-            # after 'come': 'pescado' and 'salmón' have prob 0.5.
             'el gato come pescado .': 0.5,
+
+            # after 'come': 'pescado' and 'salmón' have prob 0.5.
             'la gata come salmón .': 0.5,
-            'el gato come salmón .': 0.0, # 'salmón' after 'gato come' unseen
-            'la gata come pescado .': 0.0, # 'pescado' after 'gata come' unseen
-            'el gato come salame .': 0.0, # 'salame' after 'gato come' unseen
-            'la la la': 0.0,  # 'la' after 'la' unseen
+
+            # 'salmón' after 'gato come' unseen
+            'el gato come salmón .': 0.0,
+
+            # 'pescado' after 'gata come' unseen
+            'la gata come pescado .': 0.0,
+
+            # 'salame' after 'gato come' unseen
+            'el gato come salame .': 0.0,
+
+            # 'la' after 'la' unseen
+            'la la la': 0.0,
         }
         for sent, prob in sents.items():
-            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob, msg=sent)
+            self.assertAlmostEqual(ngram.sent_prob(sent.split()), prob,
+                                   msg=sent)
 
     def test_sent_log_prob_1gram(self):
         ngram = NGram(1, self.sents)
@@ -186,7 +198,8 @@ class TestNGram(TestCase):
             'la la la': log2(1 / 6.0) + 3 * log2(1 / 12.0),
         }
         for sent, prob in sents.items():
-            self.assertAlmostEqual(ngram.sent_log_prob(sent.split()), prob, msg=sent)
+            self.assertAlmostEqual(ngram.sent_log_prob(sent.split()), prob,
+                                   msg=sent)
 
     def test_sent_log_prob_2gram(self):
         ngram = NGram(2, self.sents)
@@ -202,4 +215,5 @@ class TestNGram(TestCase):
             'la la la': float('-inf'),  # 'la' after 'la' unseen
         }
         for sent, prob in sents.items():
-            self.assertAlmostEqual(ngram.sent_log_prob(sent.split()), prob, msg=sent)
+            self.assertAlmostEqual(ngram.sent_log_prob(sent.split()), prob,
+                                   msg=sent)
