@@ -264,3 +264,26 @@ class TestNGram(TestCase):
 
         perplexity = 2 ** (-cross_entropy)
         self.assertAlmostEqual(ngram.perplexity(sents), perplexity)
+
+    def test_eval_2gram(self):
+        ngram = NGram(2, self.sents)
+
+        probs = {
+            # after '<s>': 'el' and 'la' have prob 0.5.
+            # after 'come': 'pescado' and 'salmón' have prob 0.5.
+            'el gato come pescado .': 2 * log2(0.5),
+            'la gata come salmón .': 2 * log2(0.5),
+            'el gato come salmón .': 2 * log2(0.5),
+            'la gata come pescado .': 2 * log2(0.5),
+        }
+
+        sents = [x.split() for x in probs.keys()]
+
+        log_prob = sum(probs.values())
+        self.assertAlmostEqual(ngram.log_prob(sents), log_prob)
+
+        cross_entropy = log_prob / sum(map(len, sents))
+        self.assertAlmostEqual(ngram.cross_entropy(sents), cross_entropy)
+
+        perplexity = 2 ** (-cross_entropy)
+        self.assertAlmostEqual(ngram.perplexity(sents), perplexity)
