@@ -62,6 +62,45 @@ class TestNGramGenerator(TestCase):
         self.assertEqual(dict(generator.probs), probs)
         self.assertEqual(generator.sorted_probs, sorted_probs)
 
+    def test_init_3gram(self):
+        ngram = NGram(3, self.sents)
+        generator = NGramGenerator(ngram)
+
+        probs = {
+            ('<s>', '<s>'): {'el': 0.5, 'la': 0.5},
+
+            ('<s>', 'el'): {'gato': 1.0},
+            ('el', 'gato'): {'come': 1.0},
+            ('gato', 'come'): {'pescado': 1.0},
+            ('come', 'pescado'): {'.': 1.0},
+            ('pescado', '.'): {'</s>': 1.0},
+
+            ('<s>', 'la'): {'gata': 1.0},
+            ('la', 'gata'): {'come': 1.0},
+            ('gata', 'come'): {'salmón': 1.0},
+            ('come', 'salmón'): {'.': 1.0},
+            ('salmón', '.'): {'</s>': 1.0}
+        }
+
+        sorted_probs = {
+            ('<s>', '<s>'): [('el', 0.5), ('la', 0.5)],
+
+            ('<s>', 'el'): [('gato', 1.0)],
+            ('el', 'gato'): [('come', 1.0)],
+            ('gato', 'come'): [('pescado', 1.0)],
+            ('come', 'pescado'): [('.', 1.0)],
+            ('pescado', '.'): [('</s>', 1.0)],
+
+            ('<s>', 'la'): [('gata', 1.0)],
+            ('la', 'gata'): [('come', 1.0)],
+            ('gata', 'come'): [('salmón', 1.0)],
+            ('come', 'salmón'): [('.', 1.0)],
+            ('salmón', '.'): [('</s>', 1.0)],
+        }
+
+        self.assertEqual(dict(generator.probs), probs)
+        self.assertEqual(generator.sorted_probs, sorted_probs)
+
     def test_generate_token(self):
         ngram = NGram(2, self.sents)
         generator = NGramGenerator(ngram)
