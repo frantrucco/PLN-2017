@@ -206,7 +206,7 @@ class AddOneNGram(NGram):
         n -- order of the model.
         sents -- list of sentences, each one being a list of tokens.
         """
-        NGram.__init__(self, n, sents)
+        super().__init__(n, sents)
         self.vocabulary = {w for s in sents for w in s}
 
         self.vocabulary.discard('<s>')
