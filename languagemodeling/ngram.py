@@ -283,3 +283,29 @@ class InterpolatedNGram(NGram):
 
     def _gamma_finder(self):
         return 1.0  # TODO: IMPLEMENT THIS
+
+    def _cond_prob_ML(self, i, token, prev_tokens):
+        """Conditional probability of the given order of a token.
+
+        i -- the first token in prev_tokens to be considered
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens
+        """
+        n = self.n
+        V = self.V()
+        assert 0 < i
+        assert i <= n
+        assert len(prev_tokens) == n - 1
+
+        prev_tokens = prev_tokens[i - 1:]
+        tokens = prev_tokens + [token]
+
+        tokens_count = float(self.counts[tuple(tokens)])
+        prev_tokens_count = float(self.counts[tuple(prev_tokens)])
+
+        if self.addone and i == n:
+            return (tokens_count + 1) / (prev_tokens_count + V)
+        elif tokens_count == 0:
+            return 0.0
+        else:
+            return tokens_count / prev_tokens_count
