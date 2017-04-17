@@ -309,3 +309,21 @@ class InterpolatedNGram(NGram):
             return 0.0
         else:
             return tokens_count / prev_tokens_count
+
+    def _lambda(self, i, tokens):
+        """Lambda parameter
+
+        i -- the first token in tokens.
+        tokens -- the tokens.
+        """
+        n = self.n
+        assert 0 < i
+        assert i <= n
+
+        weight = 1 - sum(map(lambda j: self._lambda(j, tokens), range(1, i)))
+
+        if i == n:
+            return weight
+        else:
+            count = self.count(tuple(tokens[i - 1:]))
+            return weight * count / (count + self.gamma)
