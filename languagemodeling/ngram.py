@@ -235,3 +235,51 @@ class AddOneNGram(NGram):
         tokens = tuple(prev_tokens + [token])
         prev_tokens = tuple(prev_tokens)
         return ((self.counts[tokens]) + 1.0) / (self.counts[prev_tokens] + V)
+
+
+class InterpolatedNGram(NGram):
+
+    def __init__(self, n, sents, gamma=None, addone=True):
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        gamma -- interpolation hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: True).
+        """
+
+        assert n > 0
+        self.n = n
+
+        if not gamma:
+            ten_percent = int(90 * len(sents) / 100)
+            self.held_out_data = sents[ten_percent:]
+            sents = sents[:ten_percent]
+            self.gamma = self._gamma_finder()
+        else:
+            self.gamma = gamma
+
+        self.counts = counts = defaultdict(int)
+
+        for sent in sents:
+            sent = self._add_tags(sent)
+
+            for j in range(0, n + 1):
+                for i in range(n - j, len(sent) - j + 1):
+                    ngram = tuple(sent[i: i + j])
+                    counts[ngram] += 1
+
+        self.addone = addone
+
+        self.vocabulary = {w for s in sents for w in s}
+        self.vocabulary.discard('<s>')
+        self.vocabulary.discard('</s>')
+
+    def V(self):
+        """
+        Size of the vocabulary.
+        """
+        return len(self.vocabulary) + 1
+
+    def _gamma_finder(self):
+        return 1.0  # TODO: IMPLEMENT THIS
