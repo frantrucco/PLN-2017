@@ -209,9 +209,6 @@ class AddOneNGram(NGram):
         super().__init__(n, sents)
         self.vocabulary = {w for s in sents for w in s}
 
-        self.vocabulary.discard('<s>')
-        self.vocabulary.discard('</s>')
-
     def V(self):
         """
         Size of the vocabulary.
