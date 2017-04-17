@@ -327,3 +327,22 @@ class InterpolatedNGram(NGram):
         else:
             count = self.count(tuple(tokens[i - 1:]))
             return weight * count / (count + self.gamma)
+
+    def cond_prob(self, token, prev_tokens=None):
+        """Conditional probability of a token.
+
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        n = self.n
+        if not prev_tokens:
+            prev_tokens = []
+        assert len(prev_tokens) == n - 1
+
+        cond_prob = 0.0
+        for i in range(1, n + 1):
+            lambda_ = self._lambda(i, prev_tokens)
+            if lambda_ != 0:
+                ith_cond_prob = self._cond_prob_ML(i, token, prev_tokens)
+                cond_prob += lambda_ * ith_cond_prob
+        return cond_prob
