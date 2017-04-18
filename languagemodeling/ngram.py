@@ -250,7 +250,7 @@ class InterpolatedNGram(NGram):
 
         if not gamma:
             ten_percent = int(90 * len(sents) / 100)
-            self.held_out_data = sents[ten_percent:]
+            self.held_out = sents[ten_percent:]
             sents = sents[:ten_percent]
 
         self.counts = counts = defaultdict(int)
@@ -280,8 +280,71 @@ class InterpolatedNGram(NGram):
         """
         return len(self.vocabulary) + 1
 
-    def _gamma_finder(self):
-        return 1.0  # TODO: IMPLEMENT THIS
+    def _gamma_finder(self, a=10, niter=10):
+        """Find a gamma value using the held_out data
+
+        This function first does an exponential search to find an initial guess
+        and then runs the hill climbing algorithm using this guess. The
+        objective function is the log_probability of the held_out as a function
+        of gamma. The value of the objective function is maximized to obtain an
+        optimal gamma. Note that this is equivalent to finding a gamma that
+        minimizes the perplexity.
+
+        a -- the base of the exponent used in the exponential search
+        niter -- the number of iterations
+
+        """
+
+        def next_gamma(a, gamma): return a * gamma
+
+        def prev_gamma(a, gamma): return gamma / a
+
+        # Starting value
+        self.gamma = 1.0
+        self.log_probs = log_probs = {}  # This can be useful for testing
+        max_log_prob = log_probs[self.gamma] = self.log_prob(self.held_out)
+
+        # If n == 1, then any value of gamma is the same
+        if self.n == 1:
+            return
+
+        # Search a starting point using an exponential search
+        for iteration in range(niter):
+            self.gamma = next_gamma(a, self.gamma)
+            log_probs[self.gamma] = self.log_prob(self.held_out)
+
+            # If the value increases we have found an interval that contains
+            # a local maximum
+            if max_log_prob < log_probs[self.gamma]:
+                max_log_prob = log_probs[self.gamma]
+                max_gamma = self.gamma
+            else:
+                break
+
+        # The interval (prev(max_gamma), next(max_gamma)) contains a maximum
+        begin = prev_gamma(a, max_gamma)
+        end = next_gamma(a, max_gamma)
+        width = end - begin
+        step = width / niter
+
+        # Search using hill climbimg algorithm for a local maximum
+        for iteration in range(niter // 2):
+            left = max_gamma - step
+            self.gamma = left
+            log_probs[left] = self.log_prob(self.held_out)
+
+            right = max_gamma + step
+            self.gamma = right
+            log_probs[right] = self.log_prob(self.held_out)
+
+            if log_probs[right] > log_probs[max_gamma]:
+                max_gamma = right
+            elif log_probs[left] > log_probs[max_gamma]:
+                max_gamma = left
+            else:
+                step /= 2
+
+        self.gamma = max_gamma
 
     def _cond_prob_ML(self, i, token, prev_tokens):
         """Conditional probability of the given order of a token.
