@@ -252,9 +252,6 @@ class InterpolatedNGram(NGram):
             ten_percent = int(90 * len(sents) / 100)
             self.held_out_data = sents[ten_percent:]
             sents = sents[:ten_percent]
-            self.gamma = self._gamma_finder()
-        else:
-            self.gamma = gamma
 
         self.counts = counts = defaultdict(int)
 
@@ -271,6 +268,11 @@ class InterpolatedNGram(NGram):
         self.vocabulary = {w for s in sents for w in s}
         self.vocabulary.discard('<s>')
         self.vocabulary.discard('</s>')
+
+        if gamma:
+            self.gamma = gamma
+        else:
+            self._gamma_finder()
 
     def V(self):
         """
