@@ -4,4 +4,5 @@ docopt
 nltk
 scikit-learn
 featureforge
+matplotlib
 -e .  # install our code in editing mode
