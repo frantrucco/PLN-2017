@@ -422,3 +422,47 @@ class InterpolatedNGram(AllOrdersNGram):
                 ith_cond_prob = self._cond_prob_ML(i, token, prev_tokens)
                 cond_prob += lambda_ * ith_cond_prob
         return cond_prob
+
+
+class BackOffNGram(AllOrdersNGram):
+
+    def __init__(self, n, sents, beta=None, addone=True):
+        """
+        Back-off NGram model with discounting as described by Michael Collins.
+
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        beta -- discounting hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: True).
+        """
+        pass
+
+    def A(self, tokens):
+        """Set of words with counts > 0 for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+        pass
+
+    def alpha(self, tokens):
+        """Missing probability mass for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+        pass
+
+    def denom(self, tokens):
+        """Normalization factor for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+        pass
+
+    def cond_prob(self, token, prev_tokens=None):
+        """Conditional probability of a token.
+
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        pass
