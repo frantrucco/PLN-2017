@@ -29,7 +29,7 @@ class NGram(object):
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
         """
         n = self.n
-        if not prev_tokens:
+        if prev_tokens is None:
             prev_tokens = []
         assert len(prev_tokens) == n - 1
 
@@ -224,7 +224,7 @@ class AddOneNGram(NGram):
         n = self.n
         V = self.V()
 
-        if not prev_tokens:
+        if prev_tokens is None:
             prev_tokens = []
 
         assert len(prev_tokens) == n - 1
@@ -248,7 +248,7 @@ class InterpolatedNGram(NGram):
         assert n > 0
         self.n = n
 
-        if not gamma:
+        if gamma is None:
             ten_percent = int(90 * len(sents) / 100)
             self.held_out = sents[ten_percent:]
             sents = sents[:ten_percent]
@@ -397,7 +397,7 @@ class InterpolatedNGram(NGram):
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
         """
         n = self.n
-        if not prev_tokens:
+        if prev_tokens is None:
             prev_tokens = []
         assert len(prev_tokens) == n - 1
 
