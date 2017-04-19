@@ -34,8 +34,8 @@ class NGram(object):
         assert len(prev_tokens) == n - 1
 
         tokens = prev_tokens + [token]
-        return float(self.counts[tuple(tokens)]) /\
-            self.counts[tuple(prev_tokens)]
+        return float(self.count(tuple(tokens))) /\
+            self.count(tuple(prev_tokens))
 
     def count(self, tokens):
         """Count for an n-gram or (n-1)-gram.
@@ -231,7 +231,7 @@ class AddOneNGram(NGram):
 
         tokens = tuple(prev_tokens + [token])
         prev_tokens = tuple(prev_tokens)
-        return ((self.counts[tokens]) + 1.0) / (self.counts[prev_tokens] + V)
+        return ((self.count(tokens)) + 1.0) / (self.count(prev_tokens) + V)
 
 
 class AllOrdersNGram(NGram):
@@ -296,8 +296,8 @@ class AllOrdersNGram(NGram):
         prev_tokens = prev_tokens[i - 1:]
         tokens = prev_tokens + [token]
 
-        tokens_count = float(self.counts[tuple(tokens)])
-        prev_tokens_count = float(self.counts[tuple(prev_tokens)])
+        tokens_count = float(self.count(tuple(tokens)))
+        prev_tokens_count = float(self.count(tuple(prev_tokens)))
 
         if self.addone and i == n:
             return (tokens_count + 1) / (prev_tokens_count + V)
@@ -305,7 +305,6 @@ class AllOrdersNGram(NGram):
             return 0.0
         else:
             return tokens_count / prev_tokens_count
-
 
 
 class InterpolatedNGram(AllOrdersNGram):
