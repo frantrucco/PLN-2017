@@ -367,4 +367,69 @@ Los resultados obtenidos fueron los siguientes:
 
 Éste pareciera no ser un buen modelo de lenguaje.
 
-[^n]: 
+### InterpolatedNGram
+| N | Cross Entropy | Perplexity |
+|---|---------------|------------|
+| 1 |        -10.52 |       1463 |
+| 2 |         -9.27 |        620 |
+| 3 |         -9.20 |        588 |
+| 4 |         -9.19 |        585 |
+
+Claramente estos son mejores modelos de lenguaje que AddOneNGram.
+
+## Ejercicio 6
+
+### Clase InterpolatedNGram
+#### Constructor
+A diferencia de Ngram y AddOneNGram requerimos de los counts de todos los
+i-gramas con i en {0, ..., n}. Por ello ```counts``` se crea con todos los
+i-gramas.
+
+#### Probabilidad condicional
+Tanto la ```cond_prob``` como ```_lamda``` y ```_cond_prob_ML``` se
+implementaron siguiendo la especificación dada en el teórico.
+
+#### Sobre ```_gamma_finder```
+Se utilizó el algoritmo hill climbing para obtener el gamma que minimice la
+perplexity. Por cuestiones computacionales la función objetivo no fue la
+perplexity sino la log probability. Como minimizar la perplexity es equivalente
+a maximizar la log probability, simplemente se maximizó la función objetivo para
+obtener un gamma óptimo.
+
+Para elegir el punto de inicio del algoritmo de hill climbing se realizó una
+búsqueda exponencial. Como la función es continua y tiene un sólo máximo
+simplemente se buscaron tres gammas g1 < g2 < g3 en los que se cumpla para la
+función objetivo f:
+
+```f(g1) < f(g2)``` y ```f(g3) < f(g2)```
+
+Una vez obtenidos g1, g2 y g3 simplemente se utiliza g2 como punto de inicio y
+```(g3 - g1) / niter``` para el algoritmo de hill climbing donde niter es número
+de iteraciones que realiza el algoritmo.
+
+![Perplexity vs gamma (Galdos)](readmeimages/perplexity_gamma_galdos_1.jpeg)
+
+
+Como se puede observar en la imagen la perplexity sólo tiene un mínimo (por lo
+que la log_probability sólo tiene un máximo).
+
+#### Sobre ```gamma_visualizer```
+
+Además de implementar lo pedido se implementó un script que genera un gráfico de
+los distintos gammas que el algoritmo ```_gamma_finder``` evalúa y sus
+correspondientes valores en log_probability. Además este script permite utilizar
+dos corpus: galdos y summat.
+
+
+![Log probability vs Gamma (Galdos)](readmeimages/logprob_gamma_galdos.jpeg)
+
+
+![Log probability vs Gamma (Summat)](readmeimages/logprob_gamma_summat.jpeg)
+
+
+Como se puede observar en la imagen, a medida que se eligen mejores gammas los
+modelos con un N grande se vuelven mejores que los modelos con N más pequeños
+con los mismos gammas.
+
+Para poder utilizar este script es necesario instalar matplotlib (esta
+dependencia fue agregada a los requirements).
