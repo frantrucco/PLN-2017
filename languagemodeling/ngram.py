@@ -234,13 +234,13 @@ class AddOneNGram(NGram):
         return ((self.counts[tokens]) + 1.0) / (self.counts[prev_tokens] + V)
 
 
-class InterpolatedNGram(NGram):
+class AllOrdersNGram(NGram):
 
-    def __init__(self, n, sents, gamma=None, addone=True):
+    def __init__(self, n, sents, param=None, addone=True):
         """
         n -- order of the model.
         sents -- list of sentences, each one being a list of tokens.
-        gamma -- interpolation hyper-parameter (if not given, estimate using
+        param -- interpolation hyper-parameter (if not given, estimate using
             held-out data).
         addone -- whether to use addone smoothing (default: True).
         """
@@ -248,7 +248,7 @@ class InterpolatedNGram(NGram):
         assert n > 0
         self.n = n
 
-        if gamma is None:
+        if param is None:
             ten_percent = int(90 * len(sents) / 100)
             self.held_out = sents[ten_percent:]
             sents = sents[:ten_percent]
@@ -269,82 +269,16 @@ class InterpolatedNGram(NGram):
         self.vocabulary.discard('<s>')
         self.vocabulary.discard('</s>')
 
-        if gamma:
-            self.gamma = gamma
+        if param:
+            self.param = param
         else:
-            self._gamma_finder()
+            self._param_finder()
 
     def V(self):
         """
         Size of the vocabulary.
         """
         return len(self.vocabulary) + 1
-
-    def _gamma_finder(self, a=10, niter=10):
-        """Find a gamma value using the held_out data
-
-        This function first does an exponential search to find an initial guess
-        and then runs the hill climbing algorithm using this guess. The
-        objective function is the log_probability of the held_out as a function
-        of gamma. The value of the objective function is maximized to obtain an
-        optimal gamma. Note that this is equivalent to finding a gamma that
-        minimizes the perplexity.
-
-        a -- the base of the exponent used in the exponential search
-        niter -- the number of iterations
-
-        """
-
-        def next_gamma(a, gamma): return a * gamma
-
-        def prev_gamma(a, gamma): return gamma / a
-
-        # Starting value
-        self.gamma = 1.0
-        self.log_probs = log_probs = {}  # This can be useful for testing
-        max_log_prob = log_probs[self.gamma] = self.log_prob(self.held_out)
-
-        # If n == 1, then any value of gamma is the same
-        if self.n == 1:
-            return
-
-        # Search a starting point using an exponential search
-        for iteration in range(niter):
-            self.gamma = next_gamma(a, self.gamma)
-            log_probs[self.gamma] = self.log_prob(self.held_out)
-
-            # If the value increases we have found an interval that contains
-            # a local maximum
-            if max_log_prob < log_probs[self.gamma]:
-                max_log_prob = log_probs[self.gamma]
-                max_gamma = self.gamma
-            else:
-                break
-
-        # The interval (prev(max_gamma), next(max_gamma)) contains a maximum
-        begin = prev_gamma(a, max_gamma)
-        end = next_gamma(a, max_gamma)
-        width = end - begin
-        step = width / niter
-
-        # Search using hill climbimg algorithm for a local maximum
-        for iteration in range(niter // 2):
-            left = max_gamma - step
-            self.gamma = left
-            log_probs[left] = self.log_prob(self.held_out)
-
-            right = max_gamma + step
-            self.gamma = right
-            log_probs[right] = self.log_prob(self.held_out)
-
-            if log_probs[right] > log_probs[max_gamma]:
-                max_gamma = right
-            elif log_probs[left] > log_probs[max_gamma]:
-                max_gamma = left
-            else:
-                step /= 2
-
-        self.gamma = max_gamma
 
     def _cond_prob_ML(self, i, token, prev_tokens):
         """Conditional probability of the given order of a token.
@@ -372,6 +306,86 @@ class InterpolatedNGram(NGram):
         else:
             return tokens_count / prev_tokens_count
 
+
+
+class InterpolatedNGram(AllOrdersNGram):
+
+    def __init__(self, n, sents, gamma=None, addone=True):
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        gamma -- interpolation hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: True).
+        """
+        super().__init__(n, sents, gamma, addone)
+
+    def _param_finder(self, a=10, niter=10):
+        """Find a gamma value using the held_out data
+
+        This function first does an exponential search to find an initial guess
+        and then runs the hill climbing algorithm using this guess. The
+        objective function is the log_probability of the held_out as a function
+        of gamma. The value of the objective function is maximized to obtain an
+        optimal gamma. Note that this is equivalent to finding a gamma that
+        minimizes the perplexity.
+
+        a -- the base of the exponent used in the exponential search
+        niter -- the number of iterations
+
+        """
+
+        def next_gamma(a, gamma): return a * gamma
+
+        def prev_gamma(a, gamma): return gamma / a
+
+        # Starting value
+        self.param = 1.0
+        self.log_probs = log_probs = {}  # This can be useful for testing
+        max_log_prob = log_probs[self.param] = self.log_prob(self.held_out)
+
+        # If n == 1, then any value of gamma is the same
+        if self.n == 1:
+            return
+
+        # Search a starting point using an exponential search
+        for iteration in range(niter):
+            self.param = next_gamma(a, self.param)
+            log_probs[self.param] = self.log_prob(self.held_out)
+
+            # If the value increases we have found an interval that contains
+            # a local maximum
+            if max_log_prob < log_probs[self.param]:
+                max_log_prob = log_probs[self.param]
+                max_gamma = self.param
+            else:
+                break
+
+        # The interval (prev(max_gamma), next(max_gamma)) contains a maximum
+        begin = prev_gamma(a, max_gamma)
+        end = next_gamma(a, max_gamma)
+        width = end - begin
+        step = width / niter
+
+        # Search using hill climbimg algorithm for a local maximum
+        for iteration in range(niter // 2):
+            left = max_gamma - step
+            self.param = left
+            log_probs[left] = self.log_prob(self.held_out)
+
+            right = max_gamma + step
+            self.param = right
+            log_probs[right] = self.log_prob(self.held_out)
+
+            if log_probs[right] > log_probs[max_gamma]:
+                max_gamma = right
+            elif log_probs[left] > log_probs[max_gamma]:
+                max_gamma = left
+            else:
+                step /= 2
+
+        self.param = max_gamma
+
     def _lambda(self, i, tokens):
         """Lambda parameter
 
@@ -388,7 +402,7 @@ class InterpolatedNGram(NGram):
             return weight
         else:
             count = self.count(tuple(tokens[i - 1:]))
-            return weight * count / (count + self.gamma)
+            return weight * count / (count + self.param)
 
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
