@@ -443,18 +443,42 @@ class BackOffNGram(AllOrdersNGram):
         super().__init__(n, sents, param=beta, addone=addone)
 
         A = self.cache_A = defaultdict(set)
+        denoms = self.cache_denoms = {}
 
         for kgram in self.counts.keys():
             if len(kgram) >= 2 and kgram != ('<s>',) * len(kgram):
                 A[kgram[:-1]].add(kgram[-1])
 
         if beta is not None:
-            self.param = beta
+            self._set_param(beta)
         else:
             self._param_finder()
 
     def _param_finder(self):
-        self.param = 0.0
+        self._set_param(0.0)
+
+    def _set_param(self, beta):
+        self.param = beta
+        self._precalculate_denoms()
+
+    def _precalculate_denom(self, tokens):
+        """Normalization factor for a k-gram with 0 < k < n.
+        tokens -- the k-gram tuple.
+        """
+        if len(tokens) == 1:
+            prev_tokens = None
+        else:
+            prev_tokens = tokens[1:]
+
+        denom = 1.0
+        if tokens in self.cache_A:
+            for token in self.cache_A[tokens]:
+                denom -= self.cond_prob(token, prev_tokens)
+        return denom
+
+    def _precalculate_denoms(self):
+        for ngram in self.cache_A:
+            self.cache_denoms[ngram] = self._precalculate_denom(ngram)
 
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
@@ -487,15 +511,11 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
-        n = self.n
-        assert 0 < len(tokens)
-        assert len(tokens) < n
-
-        A = self.A(tokens)
-        s = 0
-        for t in A:
-            s += self.cond_prob(t, tokens[1:])
-        return 1 - s
+        if tokens in self.cache_denoms:
+            return self.cache_denoms[tokens]
+        else:
+            self.cache_denoms[tokens] = self._precalculate_denom(tokens)
+            return self.cache_denoms[tokens]
 
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
