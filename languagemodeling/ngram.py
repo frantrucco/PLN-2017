@@ -492,4 +492,30 @@ class BackOffNGram(AllOrdersNGram):
         token -- the token.
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
         """
-        pass
+        V = self.V()
+        n = self.n
+
+        if prev_tokens is None:
+            prev_tokens = ()
+
+        assert len(prev_tokens) <= n - 1
+
+        prev_tokens = tuple(prev_tokens)
+
+        A = self.A(prev_tokens)
+
+        if prev_tokens is () and self.addone:
+            return (self.count((token,)) + 1) / (self.count(prev_tokens) + V)
+
+        if prev_tokens is () and not self.addone:
+            return self.count((token,)) / self.count(prev_tokens)
+
+        if token in A:
+            return (self.count(prev_tokens + (token,)) - self.param) / \
+                self.count(prev_tokens)
+
+        else:
+            prob = self.cond_prob(token, prev_tokens[1:])
+            if prob != 0:
+                prob *= self.alpha(prev_tokens) / self.denom(prev_tokens)
+            return prob
