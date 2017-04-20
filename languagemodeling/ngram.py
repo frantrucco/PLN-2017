@@ -439,14 +439,31 @@ class BackOffNGram(AllOrdersNGram):
             held-out data).
         addone -- whether to use addone smoothing (default: True).
         """
-        pass
+        super().__init__(n, sents, param=beta, addone=addone)
+
+        self.cache_A = defaultdict(lambda: None)
+
+    def _param_finder(self):
+        self.param = 0.0
 
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
 
         tokens -- the k-gram tuple.
         """
-        pass
+        tokens = tokens
+
+        # Lazy initialization of cache
+        if self.cache_A[tokens] is None:
+            self.vocabulary.add('</s>')
+
+            A = {t for t in self.vocabulary if self.count(tokens + (t,)) > 0}
+
+            self.vocabulary.remove('</s>')
+
+            self.cache_A[tokens] = A
+
+        return self.cache_A[tokens]
 
     def alpha(self, tokens):
         """Missing probability mass for a k-gram with 0 < k < n.
