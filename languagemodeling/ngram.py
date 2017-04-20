@@ -451,6 +451,10 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
+        n = self.n
+        assert 0 < len(tokens)
+        assert len(tokens) < n
+
         tokens = tokens
 
         # Lazy initialization of cache
@@ -470,6 +474,10 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
+        n = self.n
+        assert 0 < len(tokens)
+        assert len(tokens) < n
+
         A = self.A(tokens)
 
         if len(A) > 0:
@@ -482,6 +490,10 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
+        n = self.n
+        assert 0 < len(tokens)
+        assert len(tokens) < n
+
         A = self.A(tokens)
 
         return 1 - sum(map(lambda t: self.cond_prob(t, tokens[1:]), A))
@@ -495,26 +507,28 @@ class BackOffNGram(AllOrdersNGram):
         V = self.V()
         n = self.n
 
-        if prev_tokens is None:
+        # First base case
+        if prev_tokens in [None, (), []]:
             prev_tokens = ()
+
+            if self.addone:
+                return (self.count((token,)) + 1) / \
+                    (self.count(prev_tokens) + V)
+
+            if not self.addone:
+                return self.count((token,)) / self.count(prev_tokens)
 
         assert len(prev_tokens) <= n - 1
 
         prev_tokens = tuple(prev_tokens)
 
-        A = self.A(prev_tokens)
-
-        if prev_tokens is () and self.addone:
-            return (self.count((token,)) + 1) / (self.count(prev_tokens) + V)
-
-        if prev_tokens is () and not self.addone:
-            return self.count((token,)) / self.count(prev_tokens)
-
-        if token in A:
+        if token in self.A(prev_tokens):
+            # Second base case
             return (self.count(prev_tokens + (token,)) - self.param) / \
                 self.count(prev_tokens)
 
         else:
+            # Recursive case
             prob = self.cond_prob(token, prev_tokens[1:])
             if prob != 0:
                 prob *= self.alpha(prev_tokens) / self.denom(prev_tokens)
