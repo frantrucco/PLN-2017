@@ -482,7 +482,9 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
-        pass
+        A = self.A(tokens)
+
+        return 1 - sum(map(lambda t: self.cond_prob(t, tokens[1:]), A))
 
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
