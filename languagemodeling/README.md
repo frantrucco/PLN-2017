@@ -377,19 +377,30 @@ Los resultados obtenidos fueron los siguientes:
 
 Claramente estos son mejores modelos de lenguaje que AddOneNGram.
 
+### BackOffNGram
+| N | Cross Entropy | Perplexity |
+|---|---------------|------------|
+| 1 |        -10.56 |       1506 |
+| 2 |         -8.87 |        469 |
+| 3 |         -8.79 |        445 |
+| 4 |         -8.81 |        451 |
+
+Claramente estos son mejores modelos de lenguaje que InterpolatedNGram y que AddOneNGram.
+
 ## Ejercicio 6
 
 ### Clase InterpolatedNGram
 #### Constructor
 A diferencia de Ngram y AddOneNGram requerimos de los counts de todos los
 i-gramas con i en {0, ..., n}. Por ello ```counts``` se crea con todos los
-i-gramas.
+i-gramas. Notar que luego del ejercicio 7, esta clase deriva de otra más general
+llamada AllOrdersNGram. Para una descripción de esta clase vea el ejercicio 7.
 
 #### Probabilidad condicional
 Tanto la ```cond_prob``` como ```_lamda``` y ```_cond_prob_ML``` se
 implementaron siguiendo la especificación dada en el teórico.
 
-#### Sobre ```_gamma_finder```
+#### Sobre ```_param_finder```
 Se utilizó el algoritmo hill climbing para obtener el gamma que minimice la
 perplexity. Por cuestiones computacionales la función objetivo no fue la
 perplexity sino la log probability. Como minimizar la perplexity es equivalente
@@ -411,13 +422,15 @@ de iteraciones que realiza el algoritmo.
 
 
 Como se puede observar en la imagen la perplexity sólo tiene un mínimo (por lo
-que la log_probability sólo tiene un máximo).
+que la log probability sólo tiene un máximo).
+Este gráfico fue obtenido utilizando 800 gammas de la forma 1.01<sup>k</sup> con k en
+{0, 1, ..., 799}.
 
 #### Sobre ```gamma_visualizer```
 
 Además de implementar lo pedido se implementó un script que genera un gráfico de
-los distintos gammas que el algoritmo ```_gamma_finder``` evalúa y sus
-correspondientes valores en log_probability. Además este script permite utilizar
+los distintos gammas que el algoritmo ```_param_finder``` evalúa y sus
+correspondientes valores en log probability. Además este script permite utilizar
 dos corpus: galdos y summat.
 
 
@@ -433,3 +446,85 @@ con los mismos gammas.
 
 Para poder utilizar este script es necesario instalar matplotlib (esta
 dependencia fue agregada a los requirements).
+
+## Ejercicio 7
+
+### Clase AllOrdersNGram
+#### ¿Por qué existe esta clase?
+Dado que InterpolatedNGram y BackOffNGram usan un constructor similar y ambos
+tienen vocabulario y el método ```V()```, fue necesario crear esta clase para
+evitar la duplicación de código.
+
+#### Constructor
+El constructor de AllOrdersNGram genera los counts para todos los k-gramas con 0
+<= k <= n. Adicionalmente se generan los counts para las tuplas de k tokens de
+la forma ('<s\>',) * k con 0 < k < n.
+También separa oraciones para development en caso de que no se haya pasado
+ningún parámetro (beta o gamma) y guarda el vocabulario.
+Este constructor no guarda el parámetro por lo que cada subclase debe
+implementar eso en su constructor. Esto permite la inicialización de otras
+estructuras que pueden llegar a ser requeridas antes de guardar el parámetro.
+
+### Clase BackOffNGram
+#### Constructor
+Primero llama al constructor de la super clase (AllOrdersNGram) y luego:
+
+- Crea el caché de A. Para crear el caché de A simplemente el algoritmo itera
+  sobre las keys de counts. ¿Por qué funciona esto? Sean x<sub>1</sub>,
+  x<sub>2</sub>, ..., x<sub>i</sub> una tupla de tokens. Dado que es condición
+  necesaria para que x<sub>i</sub> pertenezca a A(x<sub>1</sub>, x<sub>2</sub>,
+  ..., x<sub>i - 1</sub>) que x<sub>1</sub>, x<sub>2</sub>, ..., x<sub>i</sub>
+  sea una key de counts, podemos calcular A(tokens) para todo los tokens
+  simplemente iterando sobre counts; si en cambio se construyera A(tokens) cada
+  vez que se llama a la función la complejidad resultante sería mucho mayor.
+  Claramente para que esto funcione i debe ser mayor a 1 y no se puede cumplir
+  que x<sub>j</sub> sea igual al tag de apertura para todo j.
+
+- Si se ha pasado un parámetro beta se utiliza el mismo para inicializar el
+  parámetro llamando a ```_set_param()``` ( ver método ```_set_param()``` ). En el
+  caso contrario se llama al método ```_param_finder``` ( ver método
+  ```_set_param()``` )
+
+#### Sobre ```_set_param()```
+Además de cachear los conjuntos A, se cachean los denoms. Como denom() está en
+función del parámetro beta, cada vez que el parámetro es cambiado el recacheo de
+los denoms debe ser realizado. A esto se debe la existencia de este método:
+asegura que cada vez que el valor del parámetro cambie, también se actualize el
+caché de denom.
+
+#### Sobre ```_param_finder()```
+Una versión del _param_finder de InterpolatedNGram sin la búsqueda exponencial
+del valor inicial (guess) para el hill climber; en cambio utiliza el valor 0.5
+como valor inicial.
+
+Dado que la función sólo tiene un máximo en log probability o un mínimo en
+perplexity como se muestra en la imagen
+
+![Log Probability vs Beta (Galdos)](readmeimages/log_prob_beta_galdos_100.jpeg)
+
+Como se puede observar en el gráfico la log probability sólo tiene un máximo
+(por lo que la perplexity sólo tiene un mínimo). Este gráfico fue obtenido
+utilizando 100 betas aleatorios distribuídos uniformemente en el intervalo [0,
+1]
+También es interesante notar que para N=4 se obtienen peores resultados que para
+N=3. Esto podría indicar un over-fitting para el caso N=4.
+
+
+#### Sobre ```beta_visualizer```
+
+Además de implementar lo pedido se implementó un script que genera un gráfico de
+los distintos betas que el algoritmo ```_param_finder``` evalúa y sus
+correspondientes valores en log probability. Además este script permite utilizar
+dos corpus: galdos y summat.
+
+
+![Log probability vs Beta (Galdos)](readmeimages/logprob_beta_galdos.jpeg)
+
+
+![Log probability vs Beta (Summat)](readmeimages/logprob_beta_summat.jpeg)
+
+
+Como se puede observar en los gráficos , a medida que se eligen mejores gammas
+los modelos con un N grande se vuelven mejores que los modelos con N más
+pequeños con los mismos gammas. Aunque pareciera haber un poco de over-fitting
+para N=4 en el corpus de summat.
