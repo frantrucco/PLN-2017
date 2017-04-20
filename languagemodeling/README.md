@@ -505,7 +505,7 @@ perplexity como se muestra en la imagen
 Como se puede observar en el gráfico la log probability sólo tiene un máximo
 (por lo que la perplexity sólo tiene un mínimo). Este gráfico fue obtenido
 utilizando 100 betas aleatorios distribuídos uniformemente en el intervalo [0,
-1]
+1].
 También es interesante notar que para N=4 se obtienen peores resultados que para
 N=3. Esto podría indicar un over-fitting para el caso N=4.
 
@@ -526,5 +526,4 @@ dos corpus: galdos y summat.
 
 Como se puede observar en los gráficos , a medida que se eligen mejores gammas
 los modelos con un N grande se vuelven mejores que los modelos con N más
-pequeños con los mismos gammas. Aunque pareciera haber un poco de over-fitting
-para N=4 en el corpus de summat.
+pequeños con los mismos gammas. Aunque pareciera haber over-fitting para N=4.
