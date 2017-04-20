@@ -477,7 +477,7 @@ class BackOffNGram(AllOrdersNGram):
         if self.n == 1:
             return
 
-        niter = niter // 2
+        niter = niter
         step = 0.5 / niter
 
         # Search using hill climbimg algorithm for a local maximum
