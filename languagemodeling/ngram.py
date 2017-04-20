@@ -494,8 +494,7 @@ class BackOffNGram(AllOrdersNGram):
                 max_beta = right
             elif log_probs[left] > log_probs[max_beta]:
                 max_beta = left
-            else:
-                step /= 2
+            step /= 2
 
         self._set_param(max_beta)
 
@@ -504,18 +503,10 @@ class BackOffNGram(AllOrdersNGram):
         self._precalculate_denoms()
 
     def _precalculate_denom(self, tokens):
-        """Normalization factor for a k-gram with 0 < k < n.
-        tokens -- the k-gram tuple.
-        """
-        if len(tokens) == 1:
-            prev_tokens = None
-        else:
-            prev_tokens = tokens[1:]
-
-        denom = 1.0
+        s = 0
         for token in self.A(tokens):
-            denom -= self.cond_prob(token, prev_tokens)
-        return denom
+            s += self.cond_prob(token, tokens[1:])
+        return 1 - s
 
     def _precalculate_denoms(self):
         for ngram in self.cache_A:
