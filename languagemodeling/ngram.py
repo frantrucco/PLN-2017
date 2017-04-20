@@ -470,7 +470,12 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
-        pass
+        A = self.A(tokens)
+
+        if len(A) > 0:
+            return self.param * len(A) / self.count(tokens)
+        else:
+            return 1
 
     def denom(self, tokens):
         """Normalization factor for a k-gram with 0 < k < n.
