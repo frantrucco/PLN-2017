@@ -273,7 +273,7 @@ class AllOrdersNGram(NGram):
         self.vocabulary.discard('<s>')
         self.vocabulary.discard('</s>')
 
-        if param:
+        if param is not None:
             self.param = param
         else:
             self._param_finder()
