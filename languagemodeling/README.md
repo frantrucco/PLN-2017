@@ -381,9 +381,9 @@ Claramente estos son mejores modelos de lenguaje que AddOneNGram.
 | N | Cross Entropy | Perplexity |
 |---|---------------|------------|
 | 1 |        -10.56 |       1506 |
-| 2 |         -8.87 |        469 |
-| 3 |         -8.79 |        445 |
-| 4 |         -8.81 |        451 |
+| 2 |         -8.88 |        470 |
+| 3 |         -8.80 |        446 |
+| 4 |         -8.82 |        451 |
 
 Claramente estos son mejores modelos de lenguaje que InterpolatedNGram y que AddOneNGram.
 
@@ -492,23 +492,26 @@ los denoms debe ser realizado. A esto se debe la existencia de este método:
 asegura que cada vez que el valor del parámetro cambie, también se actualize el
 caché de denom.
 
-#### Sobre ```_param_finder()```
-Una versión del _param_finder de InterpolatedNGram sin la búsqueda exponencial
-del valor inicial (guess) para el hill climber; en cambio utiliza el valor 0.5
-como valor inicial.
+#### Sobre ```_precalculate_denoms, _precalculate_denom```
+Para cada uno de los k-grams guardados como keys en self.cache_A se computa el
+denom de ese k-gram.
 
-Dado que la función sólo tiene un máximo en log probability o un mínimo en
-perplexity como se muestra en la imagen
+#### Sobre ```_param_finder()```
+Simplemente se hace una búsqueda exponencial para obtener un máximo local.
+Se utilizó la función 1 - 0.8<sup>k<sup> con k en {1, ..., niter} en vez de la
+función 0.8<sup>k<sup> para que haya más puntos cerca de 1 que de 0. Esto se
+hizo así debido a la forma de las curvas (ver siguiente imagen).
 
 ![Log Probability vs Beta (Galdos)](readmeimages/log_prob_beta_galdos_100.jpeg)
 
 Como se puede observar en el gráfico la log probability sólo tiene un máximo
-(por lo que la perplexity sólo tiene un mínimo). Este gráfico fue obtenido
-utilizando 100 betas aleatorios distribuídos uniformemente en el intervalo [0,
-1].
-También es interesante notar que para N=4 se obtienen peores resultados que para
-N=3. Esto podría indicar un over-fitting para el caso N=4.
+(por lo que la perplexity sólo tiene un mínimo). Esto implica que la búsqueda
+exponencial utilizada puede encontrar un valor cercano al máximo global.
 
+Este gráfico fue obtenido utilizando 100 betas aleatorios distribuídos
+uniformemente en el intervalo [0, 1]. También es interesante notar que para N=4
+se obtienen peores resultados que para N=3. Esto podría indicar un over-fitting
+para el caso N=4.
 
 #### Sobre ```beta_visualizer```
 
@@ -524,6 +527,7 @@ dos corpus: galdos y summat.
 ![Log probability vs Beta (Summat)](readmeimages/logprob_beta_summat.jpeg)
 
 
-Como se puede observar en los gráficos , a medida que se eligen mejores gammas
+Como se puede observar en los gráficos, a medida que se eligen mejores gammas
 los modelos con un N grande se vuelven mejores que los modelos con N más
-pequeños con los mismos gammas. Aunque pareciera haber over-fitting para N=4.
+pequeños con los mismos gammas. Aunque pareciera haber over-fitting para N=4 en
+el corpus de galdos.
