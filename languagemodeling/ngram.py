@@ -42,7 +42,10 @@ class NGram(object):
 
         tokens -- the n-gram or (n-1)-gram tuple.
         """
-        return self.counts[tokens]
+        if tokens in self.counts:
+            return self.counts[tokens]
+        else:
+            return self.counts.default_factory()  # Return default value
 
     def _add_tags(self, sent):
         """Add (n - 1) opening tags <s> at the beginning of the sentence
@@ -244,7 +247,6 @@ class AllOrdersNGram(NGram):
             held-out data).
         addone -- whether to use addone smoothing (default: True).
         """
-
         assert n > 0
         self.n = n
 
@@ -272,11 +274,6 @@ class AllOrdersNGram(NGram):
         self.vocabulary = {w for s in sents for w in s}
         self.vocabulary.discard('<s>')
         self.vocabulary.discard('</s>')
-
-        if param is not None:
-            self.param = param
-        else:
-            self._param_finder()
 
     def V(self):
         """
@@ -322,6 +319,11 @@ class InterpolatedNGram(AllOrdersNGram):
         addone -- whether to use addone smoothing (default: True).
         """
         super().__init__(n, sents, gamma, addone)
+
+        if gamma is not None:
+            self.param = gamma
+        else:
+            self._param_finder()
 
     def _param_finder(self, a=10, niter=10):
         """Find a gamma value using the held_out data
@@ -441,7 +443,16 @@ class BackOffNGram(AllOrdersNGram):
         """
         super().__init__(n, sents, param=beta, addone=addone)
 
-        self.cache_A = defaultdict(lambda: None)
+        A = self.cache_A = defaultdict(set)
+
+        for kgram in self.counts.keys():
+            if len(kgram) >= 2 and kgram != ('<s>',) * len(kgram):
+                A[kgram[:-1]].add(kgram[-1])
+
+        if beta is not None:
+            self.param = beta
+        else:
+            self._param_finder()
 
     def _param_finder(self):
         self.param = 0.0
@@ -451,23 +462,10 @@ class BackOffNGram(AllOrdersNGram):
 
         tokens -- the k-gram tuple.
         """
-        n = self.n
-        assert 0 < len(tokens)
-        assert len(tokens) < n
-
-        tokens = tokens
-
-        # Lazy initialization of cache
-        if self.cache_A[tokens] is None:
-            self.vocabulary.add('</s>')
-
-            A = {t for t in self.vocabulary if self.count(tokens + (t,)) > 0}
-
-            self.vocabulary.remove('</s>')
-
-            self.cache_A[tokens] = A
-
-        return self.cache_A[tokens]
+        if tokens in self.cache_A:
+            return self.cache_A[tokens]
+        else:
+            return self.cache_A.default_factory()  # Return default value
 
     def alpha(self, tokens):
         """Missing probability mass for a k-gram with 0 < k < n.
@@ -495,8 +493,10 @@ class BackOffNGram(AllOrdersNGram):
         assert len(tokens) < n
 
         A = self.A(tokens)
-
-        return 1 - sum(map(lambda t: self.cond_prob(t, tokens[1:]), A))
+        s = 0
+        for t in A:
+            s += self.cond_prob(t, tokens[1:])
+        return 1 - s
 
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
