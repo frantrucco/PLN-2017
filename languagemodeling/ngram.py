@@ -513,9 +513,8 @@ class BackOffNGram(AllOrdersNGram):
             prev_tokens = tokens[1:]
 
         denom = 1.0
-        if tokens in self.cache_A:
-            for token in self.cache_A[tokens]:
-                denom -= self.cond_prob(token, prev_tokens)
+        for token in self.A(tokens):
+            denom -= self.cond_prob(token, prev_tokens)
         return denom
 
     def _precalculate_denoms(self):
