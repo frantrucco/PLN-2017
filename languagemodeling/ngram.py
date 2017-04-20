@@ -443,7 +443,7 @@ class BackOffNGram(AllOrdersNGram):
         super().__init__(n, sents, param=beta, addone=addone)
 
         A = self.cache_A = defaultdict(set)
-        denoms = self.cache_denoms = {}
+        self.cache_denoms = {}
 
         for kgram in self.counts.keys():
             if len(kgram) >= 2 and kgram != ('<s>',) * len(kgram):
@@ -454,8 +454,50 @@ class BackOffNGram(AllOrdersNGram):
         else:
             self._param_finder()
 
-    def _param_finder(self):
-        self._set_param(0.0)
+    def _param_finder(self, niter=10):
+        """Find a beta value using the held_out data
+
+        This function runs the hill climbing algorithm to find an optimal value
+        for betta. The objective function is the log_probability of the
+        held_out as a function of beta. The value of the objective function is
+        maximized to obtain an optimal beta. Note that this is equivalent to
+        finding a beta that minimizes the perplexity.
+
+        niter -- the number of iterations
+
+        """
+
+        # Starting value
+        max_beta = 0.5
+        self._set_param(max_beta)
+        self.log_probs = log_probs = {}  # This can be useful for testing
+        log_probs[self.param] = self.log_prob(self.held_out)
+
+        # If n == 1, then any value of beta is the same
+        if self.n == 1:
+            return
+
+        niter = niter // 2
+        step = 0.5 / niter
+
+        # Search using hill climbimg algorithm for a local maximum
+        for iteration in range(niter):
+            left = max_beta - step
+            self._set_param(left)
+            log_probs[left] = self.log_prob(self.held_out)
+
+            right = max_beta + step
+            self._set_param(right)
+            log_probs[right] = self.log_prob(self.held_out)
+
+            if log_probs[right] > log_probs[max_beta]:
+                max_beta = right
+            elif log_probs[left] > log_probs[max_beta]:
+                max_beta = left
+            else:
+                step /= 2
+
+        self._set_param(max_beta)
 
     def _set_param(self, beta):
         self.param = beta
