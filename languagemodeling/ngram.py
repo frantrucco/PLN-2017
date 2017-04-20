@@ -454,47 +454,43 @@ class BackOffNGram(AllOrdersNGram):
         else:
             self._param_finder()
 
-    def _param_finder(self, niter=10):
+    def _param_finder(self, a=0.8, niter=10):
         """Find a beta value using the held_out data
 
-        This function runs the hill climbing algorithm to find an optimal value
-        for betta. The objective function is the log_probability of the
-        held_out as a function of beta. The value of the objective function is
-        maximized to obtain an optimal beta. Note that this is equivalent to
-        finding a beta that minimizes the perplexity.
+        This function runs an exponential search to find a beta that maximizes
+        the log_probability of the held_out as a function of beta. Note that
+        this is equivalent to finding a beta that minimizes the perplexity.
 
+        a -- the base of the exponent used in the exponential search
         niter -- the number of iterations
 
         """
 
+        assert a < 1
         # Starting value
-        max_beta = 0.5
-        self._set_param(max_beta)
-        self.log_probs = log_probs = {}  # This can be useful for testing
-        log_probs[self.param] = self.log_prob(self.held_out)
 
-        # If n == 1, then any value of beta is the same
+        def f(beta):
+            self._set_param(beta)
+            return self.log_prob(self.held_out)
+
+        max_beta = beta = 0.0
+        self.log_probs = log_probs = {}  # This can be useful for testing
+        log_probs[max_beta] = f(max_beta)
+
+        # If n == 1, then any value of gamma is the same
         if self.n == 1:
             return
 
-        niter = niter
-        step = 0.5 / niter
+        for iteration in range(1, niter):
+            beta = 1.0 - a ** float(iteration)
+            log_probs[beta] = f(beta)
 
-        # Search using hill climbimg algorithm for a local maximum
-        for iteration in range(niter):
-            left = max_beta - step
-            self._set_param(left)
-            log_probs[left] = self.log_prob(self.held_out)
-
-            right = max_beta + step
-            self._set_param(right)
-            log_probs[right] = self.log_prob(self.held_out)
-
-            if log_probs[right] > log_probs[max_beta]:
-                max_beta = right
-            elif log_probs[left] > log_probs[max_beta]:
-                max_beta = left
-            step /= 2
+            # If the value increases we have found an interval that contains
+            # a local maximum
+            if log_probs[max_beta] < log_probs[beta]:
+                max_beta = beta
+            else:
+                break
 
         self._set_param(max_beta)
 
