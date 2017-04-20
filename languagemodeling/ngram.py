@@ -281,32 +281,6 @@ class AllOrdersNGram(NGram):
         """
         return len(self.vocabulary) + 1
 
-    def _cond_prob_ML(self, i, token, prev_tokens):
-        """Conditional probability of the given order of a token.
-
-        i -- the first token in prev_tokens to be considered
-        token -- the token.
-        prev_tokens -- the previous n-1 tokens
-        """
-        n = self.n
-        V = self.V()
-        assert 0 < i
-        assert i <= n
-        assert len(prev_tokens) == n - 1
-
-        prev_tokens = prev_tokens[i - 1:]
-        tokens = prev_tokens + [token]
-
-        tokens_count = float(self.count(tuple(tokens)))
-        prev_tokens_count = float(self.count(tuple(prev_tokens)))
-
-        if self.addone and i == n:
-            return (tokens_count + 1) / (prev_tokens_count + V)
-        elif tokens_count == 0:
-            return 0.0
-        else:
-            return tokens_count / prev_tokens_count
-
 
 class InterpolatedNGram(AllOrdersNGram):
 
@@ -389,6 +363,32 @@ class InterpolatedNGram(AllOrdersNGram):
             step /= 2
 
         self.param = max_gamma
+
+    def _cond_prob_ML(self, i, token, prev_tokens):
+        """Conditional probability of the given order of a token.
+
+        i -- the first token in prev_tokens to be considered
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens
+        """
+        n = self.n
+        V = self.V()
+        assert 0 < i
+        assert i <= n
+        assert len(prev_tokens) == n - 1
+
+        prev_tokens = prev_tokens[i - 1:]
+        tokens = prev_tokens + [token]
+
+        tokens_count = float(self.count(tuple(tokens)))
+        prev_tokens_count = float(self.count(tuple(prev_tokens)))
+
+        if self.addone and i == n:
+            return (tokens_count + 1) / (prev_tokens_count + V)
+        elif tokens_count == 0:
+            return 0.0
+        else:
+            return tokens_count / prev_tokens_count
 
     def _lambda(self, i, tokens):
         """Lambda parameter
