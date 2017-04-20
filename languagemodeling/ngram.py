@@ -386,8 +386,7 @@ class InterpolatedNGram(AllOrdersNGram):
                 max_gamma = right
             elif log_probs[left] > log_probs[max_gamma]:
                 max_gamma = left
-            else:
-                step /= 2
+            step /= 2
 
         self.param = max_gamma
 
