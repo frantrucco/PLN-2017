@@ -263,6 +263,10 @@ class AllOrdersNGram(NGram):
                     ngram = tuple(sent[i: i + j])
                     counts[ngram] += 1
 
+        for j in range(1, n + 1):
+            ngram = ('<s>',) * j
+            self.counts[ngram] += len(sents)
+
         self.addone = addone
 
         self.vocabulary = {w for s in sents for w in s}
