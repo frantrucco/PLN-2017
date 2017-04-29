@@ -10,6 +10,7 @@ class NGram(object):
         n -- order of the model.
         sents -- list of sentences, each one being a list of tokens.
         """
+
         assert n > 0
         self.n = n
         self.counts = counts = defaultdict(int)
@@ -24,6 +25,7 @@ class NGram(object):
 
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
+
 
         token -- the token.
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
