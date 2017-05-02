@@ -5,4 +5,5 @@ nltk
 scikit-learn
 featureforge
 matplotlib
+tabulate
 -e .  # install our code in editing mode
