@@ -12,7 +12,6 @@ from docopt import docopt
 from collections import defaultdict
 from corpus.ancora import SimpleAncoraCorpusReader
 from tabulate import tabulate
-from operator import itemgetter
 
 NUMBER_OF_TAGS = 10  # Number of tags that should be printed
 NUMBER_OF_WORDS = 5  # Number of words that should be printed
@@ -21,13 +20,11 @@ ROUNDING_PRECISION = 6  # Number of digits rounded
 
 
 # Better name than itemgetter(0)
-def first(x):
-    return itemgetter(0)(x)
+def first(x): return x[0]
 
 
 # Better name than itemgetter(1)
-def second(x):
-    return itemgetter(1)(x)
+def second(x): return x[1]
 
 
 def print_table(table, headers=None):
@@ -118,7 +115,7 @@ if __name__ == '__main__':
         # appeared in the text)
         words.sort(reverse=True)
 
-        _, most_frequent_words = list(zip(*words[:5]))
+        _, most_frequent_words = list(zip(*words[:NUMBER_OF_WORDS]))
 
         table.append([level, len(words), perc, most_frequent_words])
 
