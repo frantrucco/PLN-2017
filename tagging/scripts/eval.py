@@ -8,11 +8,25 @@ Options:
   -i <file>     Tagging model file.
   -h --help     Show this screen.
 """
+from collections import defaultdict
 from docopt import docopt
+from tabulate import tabulate
 import pickle
 import sys
 
 from corpus.ancora import SimpleAncoraCorpusReader
+
+TAB_SPACES = 8  # Output formatting
+
+
+def print_table(table, headers=None):
+    tablefmt = 'fancy_grid'
+    if headers is None:
+        t = tabulate(table, tablefmt=tablefmt)
+    else:
+        t = tabulate(table, headers, tablefmt=tablefmt)
+
+    print(t)
 
 
 def progress(msg, width=None):
@@ -38,7 +52,9 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # tag
-    hits, total = 0, 0
+    total = defaultdict(int)
+    hits = defaultdict(int)
+    acc = defaultdict(int)
     n = len(sents)
     for i, sent in enumerate(sents):
         word_sent, gold_tag_sent = zip(*sent)
@@ -46,15 +62,41 @@ if __name__ == '__main__':
         model_tag_sent = model.tag(word_sent)
         assert len(model_tag_sent) == len(gold_tag_sent), i
 
-        # global score
+        # Global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
-        hits += sum(hits_sent)
-        total += len(sent)
-        acc = float(hits) / total
+        hits['global'] += sum(hits_sent)
+        total['global'] += len(sent)
+        acc['global'] = float(hits['global']) / total['global']
 
-        progress('{:3.1f}% ({:2.2f}%)'.format(float(i) * 100 / n, acc * 100))
+        # Known and unknown words score
+        hits_known = [hits_sent[j] for j, word in enumerate(word_sent) if
+                      not model.unknown(word)]
 
-    acc = float(hits) / total
+        hits['known'] += sum(hits_known)
+        total['known'] += len(hits_known)
+        acc['known'] = hits['known'] / total['known']
+
+        hits['unknown'] += sum(hits_sent) - sum(hits_known)
+        total['unknown'] += len(hits_sent) - len(hits_known)
+        acc['unknown'] = hits['unknown'] / total['unknown']
+
+        template = ['Progress: {:3.1f}%',
+                    'Global accuracy: {:2.2f}%,',
+                    'Known accuracy: {:2.2f}%,',
+                    'Unknown accuracy: {:2.2f}%']
+
+        template = (' ' * TAB_SPACES).join(template)
+
+        progress(template.format(float(i) * 100 / n,
+                                 acc['global'] * 100,
+                                 acc['known'] * 100,
+                                 acc['unknown'] * 100))
 
     print('')
-    print('Accuracy: {:2.2f}%'.format(acc * 100))
+    headers = ['Global accuracy',
+               'Known words accuracy',
+               'Unknown words accuracy']
+
+    table = [['{:2.2f}%'.format(a * 100) for a in acc.values()]]
+
+    print_table(table, headers)
