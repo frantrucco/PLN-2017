@@ -12,6 +12,7 @@ from collections import defaultdict
 from docopt import docopt
 from sklearn.metrics import confusion_matrix
 from tabulate import tabulate
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import sys
@@ -19,6 +20,25 @@ import sys
 from corpus.ancora import SimpleAncoraCorpusReader
 
 TAB_SPACES = 8  # Output formatting
+
+
+def plot_confusion_matrix(cm, labels, title='Confusion matrix',
+                          cmap=plt.cm.Greens):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=90, fontsize=5)
+    plt.yticks(tick_marks, labels, fontsize=5)
+
+    plt.tight_layout()
+    plt.ylabel('True tag')
+    plt.xlabel('Predicted tag')
 
 
 def print_table(table, headers=None, row_headers=None):
@@ -71,9 +91,6 @@ if __name__ == '__main__':
         model_tag_sent = model.tag(word_sent)
         assert len(model_tag_sent) == len(gold_tag_sent), i
 
-        y_true += list(gold_tag_sent)
-        y_pred += model_tag_sent
-
         # Global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
         hits['global'] += sum(hits_sent)
@@ -104,6 +121,12 @@ if __name__ == '__main__':
                                  acc['known'] * 100,
                                  acc['unknown'] * 100))
 
+        for j, is_hit in enumerate(hits_sent):
+            # If is an error add it to the list
+            if not is_hit:
+                y_true.append(gold_tag_sent[j])
+                y_pred.append(model_tag_sent[j])
+
     print('')
     headers = ['Global accuracy',
                'Known words accuracy',
@@ -113,6 +136,19 @@ if __name__ == '__main__':
 
     print_table(table, headers)
 
-    labels = list(set(y_true).union(set(y_pred)))
+    # The labels is the set of all labels, but they must be sorted
+    # to avoid non-deterministic behavior
+    labels = set(y_true).union(set(y_pred))
+    labels = sorted(labels)
+    labels = list(labels)
+
     cm = confusion_matrix(y_true, y_pred, labels)
-    print_table(np.round(cm * 100 / np.sum(cm), 2), labels, labels)
+    # Normalize by the total amount of errors
+    cm = np.round(cm / np.sum(cm), 2)
+
+    print_table(cm * 100, labels, labels)
+
+    np.set_printoptions(precision=2)
+    plt.figure()
+    plot_confusion_matrix(cm, labels)
+    plt.show()
