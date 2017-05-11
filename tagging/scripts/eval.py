@@ -10,7 +10,9 @@ Options:
 """
 from collections import defaultdict
 from docopt import docopt
+from sklearn.metrics import confusion_matrix
 from tabulate import tabulate
+import numpy as np
 import pickle
 import sys
 
@@ -19,8 +21,12 @@ from corpus.ancora import SimpleAncoraCorpusReader
 TAB_SPACES = 8  # Output formatting
 
 
-def print_table(table, headers=None):
+def print_table(table, headers=None, row_headers=None):
     tablefmt = 'fancy_grid'
+    if row_headers is not None:
+        table = [list(map(str, list(row))) for row in table]
+        table = [[row_headers[i]] + row for i, row in enumerate(table)]
+
     if headers is None:
         t = tabulate(table, tablefmt=tablefmt)
     else:
@@ -56,11 +62,17 @@ if __name__ == '__main__':
     hits = defaultdict(int)
     acc = defaultdict(int)
     n = len(sents)
+
+    y_true = []
+    y_pred = []
     for i, sent in enumerate(sents):
         word_sent, gold_tag_sent = zip(*sent)
 
         model_tag_sent = model.tag(word_sent)
         assert len(model_tag_sent) == len(gold_tag_sent), i
+
+        y_true += list(gold_tag_sent)
+        y_pred += model_tag_sent
 
         # Global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
@@ -100,3 +112,7 @@ if __name__ == '__main__':
     table = [['{:2.2f}%'.format(a * 100) for a in acc.values()]]
 
     print_table(table, headers)
+
+    labels = list(set(y_true).union(set(y_pred)))
+    cm = confusion_matrix(y_true, y_pred, labels)
+    print_table(np.round(cm * 100 / np.sum(cm), 2), labels, labels)
