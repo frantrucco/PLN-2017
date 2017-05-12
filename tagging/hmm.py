@@ -84,7 +84,7 @@ class HMM:
         prob = 1
         for i in range(n - 1, len(y)):
             tag = y[i]
-            prev_tags = y[i - n + 1:i]
+            prev_tags = tuple(y[i - n + 1:i])
             prob *= self.trans_prob(tag, prev_tags)
         return prob
 
@@ -113,7 +113,7 @@ class HMM:
         prob = 0
         for i in range(n - 1, len(y)):
             tag = y[i]
-            prev_tags = y[i - n + 1:i]
+            prev_tags = tuple(y[i - n + 1:i])
             prob += self.log_trans_prob(tag, prev_tags)
         return prob
 
