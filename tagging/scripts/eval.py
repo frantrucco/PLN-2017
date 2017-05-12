@@ -1,11 +1,12 @@
 """Evaulate a tagger.
 
 Usage:
-  eval.py -i <file>
+  eval.py -i <file> [-o <file>]
   eval.py -h | --help
 
 Options:
   -i <file>     Tagging model file.
+  -o <file>     Output image file.
   -h --help     Show this screen.
 """
 from collections import defaultdict
@@ -151,4 +152,9 @@ if __name__ == '__main__':
     np.set_printoptions(precision=2)
     plt.figure()
     plot_confusion_matrix(cm, labels)
-    plt.show()
+
+    output_filename = opts['-o']
+    if output_filename is not None and '.png' in output_filename:
+        plt.savefig(output_filename)
+    else:
+        plt.show()
