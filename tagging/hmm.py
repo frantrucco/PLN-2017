@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections import Counter
 from math import log
 
 
@@ -214,3 +215,96 @@ class ViterbiTagger:
         # If we wanted to return the probability of the tagging sentence we
         # would need to multiply prob by log_trans_prob('</s>', path[-n:])
         return path
+
+
+class MLHMM(HMM):
+    def __init__(self, n, tagged_sents, addone=True):
+        """
+        n -- order of the model.
+        tagged_sents -- training sentences, each one being a list of pairs.
+        addone -- whether to use addone smoothing (default: True).
+        """
+        # tagset -- set of tags.
+        # trans -- transition probabilities dictionary.
+        # out -- output probabilities dictionary.
+        self.n = n
+        self.addone = addone
+
+        self.tagset = {tag for sent in tagged_sents for _, tag in sent}
+        self.wordset = {word for sent in tagged_sents for word, _ in sent}
+
+        # Generator to save memory
+        wordtags = (wt for s in tagged_sents for wt in s)
+        self.wordtag_count = defaultdict(float, Counter(wordtags))
+
+        # Create a ngram and (n-1)gram tag counter
+        self.tag_gram_count = defaultdict(float)
+
+        for sent in tagged_sents:
+            tags = [tag for _, tag in sent]
+            tags = self.add_opening_and_closing_tags(tags)
+
+            for i in range(len(sent) + 1):
+                ngram = tuple(tags[i: i + n])
+                self.tag_gram_count[ngram] += 1.0
+                self.tag_gram_count[ngram[:-1]] += 1.0
+
+        self.tagger = ViterbiTagger(self)
+
+    def tcount(self, tokens):
+        """Count for an n-gram or (n-1)-gram of tags.
+
+        tokens -- the n-gram or (n-1)-gram tuple of tags.
+        """
+        # Avoid creating new default values in defaultdict, just return the
+        # default value (0.0)
+        if tokens in self.tag_gram_count:
+            return self.tag_gram_count[tokens]
+        return 0.0
+
+    def unknown(self, word):
+        """Check if a word is unknown for the model.
+
+        word -- the word.
+        """
+        return word not in self.wordset
+
+    def trans_prob(self, tag, prev_tags=None):
+        """Probability of a tag.
+
+        tag -- the tag.
+        prev_tags -- iterable with the previous n-1 tags
+        """
+        if prev_tags is None:
+            prev_tags = tuple()
+
+        tcount = self.tcount
+        V = len(self.tagset)
+
+        prev_tags = tuple(prev_tags)
+        tags = prev_tags + (tag,)
+
+        if self.addone:
+            return (tcount(tags) + 1.0) / (tcount(prev_tags) + V)
+        else:
+            return tcount(tags) / tcount(prev_tags)
+
+    def out_prob(self, word, tag):
+        """Probability of a word given a tag.
+
+        word -- the word.
+        tag -- the tag.
+        """
+        tag_count = self.tcount((tag,))
+
+        if self.unknown(word) or tag_count == 0:
+            return 1.0 / len(self.wordset)
+        else:
+            return self.wordtag_count[(word, tag)] / tag_count
+
+    def tag(self, sent):
+        """Returns the most probable tagging for a sentence.
+
+        sent -- the sentence.
+        """
+        return self.tagger.tag(sent)
