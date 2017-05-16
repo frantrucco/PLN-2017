@@ -164,14 +164,20 @@ class ViterbiTagger:
         pi[0][opening_tags] = (0.0, [])
 
         for k, word in enumerate(sent):
-            for prev_tags in pi[k]:
-                for t in tagset:
-                    out = hmm.log_out_prob(word, t)
+            for t in tagset:
+                out = hmm.log_out_prob(word, t)
+
+                # If the probability is 0 it is not necessary to add it to
+                # pi.
+                if out == -inf:
+                    continue
+
+                for prev_tags in pi[k]:
                     trans = hmm.log_trans_prob(t, prev_tags)
 
                     # If the probability is 0 it is not necessary to add it to
                     # pi.
-                    if out == -inf or trans == -inf:
+                    if trans == -inf:
                         continue
 
                     # The probability it is not 0
