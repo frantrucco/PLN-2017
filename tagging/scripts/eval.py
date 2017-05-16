@@ -9,7 +9,6 @@ Options:
   -o <file>     Output image file.
   -h --help     Show this screen.
 """
-from collections import defaultdict
 from docopt import docopt
 from sklearn.metrics import confusion_matrix
 from tabulate import tabulate
@@ -29,17 +28,22 @@ def plot_confusion_matrix(cm, labels, title='Confusion matrix',
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
+    FONTSIZE = 10
+    ROTATION = 90
+    INTERPOLATION = 'nearest'
+    YLABEL = 'True Tag'
+    XLABEL = 'Predicted Tag'
 
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.imshow(cm, interpolation=INTERPOLATION, cmap=cmap)
     plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(labels))
-    plt.xticks(tick_marks, labels, rotation=90, fontsize=5)
-    plt.yticks(tick_marks, labels, fontsize=5)
+    plt.xticks(tick_marks, labels, rotation=ROTATION, fontsize=FONTSIZE)
+    plt.yticks(tick_marks, labels, fontsize=FONTSIZE)
 
     plt.tight_layout()
-    plt.ylabel('True tag')
-    plt.xlabel('Predicted tag')
+    plt.xlabel(XLABEL)
+    plt.ylabel(YLABEL)
 
 
 def print_table(table, headers=None, row_headers=None):
@@ -64,6 +68,21 @@ def progress(msg, width=None):
     sys.stdout.flush()
 
 
+class Score(object):
+    def __init__(self):
+        self._hits = 0
+        self._total = 0
+        self._acc = 0.0
+
+    def update(self, new_hits, added):
+        self._hits += new_hits
+        self._total += added
+        self._acc = float(self._hits) / self._total
+
+    def acc(self):
+        return self._acc * 100
+
+
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
@@ -79,9 +98,9 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # tag
-    total = defaultdict(int)
-    hits = defaultdict(int)
-    acc = defaultdict(int)
+    global_score = Score()
+    known_score = Score()
+    unknown_score = Score()
     n = len(sents)
 
     y_true = []
@@ -94,21 +113,19 @@ if __name__ == '__main__':
 
         # Global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
-        hits['global'] += sum(hits_sent)
-        total['global'] += len(sent)
-        acc['global'] = float(hits['global']) / total['global']
+        sum_hits_sent = sum(hits_sent)
+
+        global_score.update(sum_hits_sent, len(sent))
 
         # Known and unknown words score
         hits_known = [hits_sent[j] for j, word in enumerate(word_sent) if
                       not model.unknown(word)]
+        sum_hits_known = sum(hits_known)
 
-        hits['known'] += sum(hits_known)
-        total['known'] += len(hits_known)
-        acc['known'] = hits['known'] / total['known']
+        known_score.update(sum_hits_known, len(hits_known))
 
-        hits['unknown'] += sum(hits_sent) - sum(hits_known)
-        total['unknown'] += len(hits_sent) - len(hits_known)
-        acc['unknown'] = hits['unknown'] / total['unknown']
+        unknown_score.update(sum_hits_sent - sum_hits_known,
+                             len(hits_sent) - len(hits_known))
 
         template = ['Progress: {:3.1f}%',
                     'Global accuracy: {:2.2f}%,',
@@ -118,12 +135,11 @@ if __name__ == '__main__':
         template = (' ' * TAB_SPACES).join(template)
 
         progress(template.format(float(i) * 100 / n,
-                                 acc['global'] * 100,
-                                 acc['known'] * 100,
-                                 acc['unknown'] * 100))
-
+                                 global_score.acc(),
+                                 known_score.acc(),
+                                 unknown_score.acc()))
         for j, is_hit in enumerate(hits_sent):
-            # If is an error add it to the list
+            # If it is an error then add it to the list
             if not is_hit:
                 y_true.append(gold_tag_sent[j])
                 y_pred.append(model_tag_sent[j])
@@ -133,15 +149,15 @@ if __name__ == '__main__':
                'Known words accuracy',
                'Unknown words accuracy']
 
-    table = [['{:2.2f}%'.format(a * 100) for a in acc.values()]]
+    scores = (global_score, known_score, unknown_score)
+    table = [['{:2.2f}%'.format(s.acc()) for s in scores]]
 
     print_table(table, headers)
 
     # The labels is the set of all labels, but they must be sorted
-    # to avoid non-deterministic behavior
+    # to avoid random behavior
     labels = set(y_true).union(set(y_pred))
     labels = sorted(labels)
-    labels = list(labels)
 
     cm = confusion_matrix(y_true, y_pred, labels)
     # Normalize by the total amount of errors
