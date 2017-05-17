@@ -1,12 +1,13 @@
 """Evaulate a tagger.
 
 Usage:
-  eval.py -i <file> [-o <file>]
+  eval.py -i <file> [-o <file>] [--no-progress]
   eval.py -h | --help
 
 Options:
   -i <file>     Tagging model file.
   -o <file>     Output image file.
+  --no-progress  Do not print progress.
   -h --help     Show this screen.
 """
 from docopt import docopt
@@ -118,7 +119,7 @@ class Progress(object):
         if self.i == self.n:
             print()  # Avoid next print to be on the same line
 
-    def print_scores(self, tablefmt='fancy_grid'):
+    def print_scores(self, tablefmt='orgtbl'):
         scores = (self.global_score, self.known_score, self.unknown_score)
         table = [[s.acc_str() for s in scores]]
         t = tabulate(table, self.headers, tablefmt=tablefmt)
@@ -138,6 +139,9 @@ if __name__ == '__main__':
     output_filename = opts['-o']
     should_show_cm = output_filename is None or '.png' not in output_filename
     should_savefig = not should_show_cm
+
+    # Should we print progress?
+    should_print_progress = not opts['--no-progress']
 
     # Load the data
     files = '3LB-CAST/.*\.tbf\.xml'
@@ -163,7 +167,8 @@ if __name__ == '__main__':
         y_true += [t for p, t in zip(pred_tags, true_tags) if p != t]
         y_pred += [p for p, t in zip(pred_tags, true_tags) if p != t]
 
-        progress.show()
+        if should_print_progress:
+            progress.show()
 
     progress.print_scores()
 
