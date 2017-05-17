@@ -26,8 +26,8 @@ class HMM:
 
         self.n = n
         self._tagset = tagset
-        self._out = to_default_dict(out)
-        self._trans = to_default_dict(trans)
+        self._out = out
+        self._trans = trans
 
     def tagset(self):
         """Returns the set of tags.
@@ -40,7 +40,10 @@ class HMM:
         tag -- the tag.
         prev_tags -- iterable with the previous n-1 tags
         """
-        return self._trans[tuple(prev_tags)][tag]
+        prev_tags = tuple(prev_tags)
+        if prev_tags in self._trans and tag in self._trans[prev_tags]:
+            return self._trans[prev_tags][tag]
+        return 0.0
 
     def log_trans_prob(self, tag, prev_tags):
         """Log probability of a tag.
@@ -56,7 +59,9 @@ class HMM:
         word -- the word.
         tag -- the tag.
         """
-        return self._out[tag][word]
+        if tag in self._out and word in self._out[tag]:
+            return self._out[tag][word]
+        return 0.0
 
     def log_out_prob(self, word, tag):
         """Log probability of a word given a tag.
@@ -240,7 +245,7 @@ class MLHMM(HMM):
         self._wordset = {word for sent in tagged_sents for word, _ in sent}
 
         wordtags = [wt for s in tagged_sents for wt in s]
-        self._wordtag_count = defaultdict(float, Counter(wordtags))
+        self._wordtag_count = dict(Counter(wordtags))
 
         # Create a ngram (n-1)gram and 1gram tag counter
         # 1gram counts are required in out_prob
@@ -260,6 +265,7 @@ class MLHMM(HMM):
                 self._tag_gram_count[ngram] += 1.0
                 self._tag_gram_count[ngram[:-1]] += 1.0
 
+        self._tag_gram_count = dict(self._tag_gram_count)
         self.tagger = ViterbiTagger(self)
 
     def tcount(self, tokens):
@@ -267,7 +273,9 @@ class MLHMM(HMM):
 
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
-        return self._tag_gram_count[tokens]
+        if tokens in self._tag_gram_count:
+            return self._tag_gram_count[tokens]
+        return 0.0
 
     def unknown(self, word):
         """Check if a word is unknown for the model.
@@ -293,8 +301,7 @@ class MLHMM(HMM):
 
         if self._addone:
             return (tcount(tags) + 1.0) / (tcount(prev_tags) + V)
-        else:
-            return tcount(tags) / tcount(prev_tags)
+        return tcount(tags) / tcount(prev_tags)
 
     def out_prob(self, word, tag):
         """Probability of a word given a tag.
@@ -306,8 +313,10 @@ class MLHMM(HMM):
 
         if self.unknown(word) or tag_count == 0:
             return 1.0 / len(self._wordset)
-        else:
+        elif (word, tag) in self._wordtag_count:
             return self._wordtag_count[(word, tag)] / tag_count
+        else:
+            return 0.0
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
