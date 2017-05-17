@@ -19,50 +19,48 @@ import sys
 
 from corpus.ancora import SimpleAncoraCorpusReader
 
-TAB_SPACES = 8  # Output formatting
 
+class ConfusionMatrix(object):
+    def __init__(self, y_true, y_pred, labels, normalize):
+        self.labels = labels
+        self.cm = confusion_matrix(y_true, y_pred, labels)
+        if normalize:
+            self.cm = np.round(self.cm / np.sum(self.cm), 2)
 
-def plot_confusion_matrix(cm, labels, title='Confusion matrix',
-                          ylabel='True Tag', xlabel='Predicted Tag'):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    np.set_printoptions(precision=2)
+    def plot(self, title='Confusion matrix', ylabel='True Tag',
+             xlabel='Predicted Tag'):
+        """
+        This function prints and plots the confusion matrix.
+        Normalization can be applied by setting `normalize=True`.
+        """
+        labels = self.labels
+        cm = self.cm
+        np.set_printoptions(precision=2)
 
-    plt.figure(figsize=(10, 10), dpi=110)
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Greens)
-    plt.title(title)
-    plt.colorbar()
+        plt.figure(figsize=(10, 10), dpi=110)
+        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Greens)
+        plt.title(title)
+        plt.colorbar()
 
-    tick_marks = np.arange(len(labels))
-    plt.xticks(tick_marks, labels, rotation=90, fontsize=9)
-    plt.yticks(tick_marks, labels, fontsize=9)
+        tick_marks = np.arange(len(labels))
+        plt.xticks(tick_marks, labels, rotation=90, fontsize=9)
+        plt.yticks(tick_marks, labels, fontsize=9)
 
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
 
+    def show(self):
+        plt.show()
 
-def print_table(table, headers=None, row_headers=None):
-    tablefmt = 'fancy_grid'
-    if row_headers is not None:
+    def savefig(self, output_filename):
+        plt.savefig(output_filename)
+
+    def __str__(self, tablefmt='fancy_grid'):
+        table = self.cm * 100
         table = [list(map(str, list(row))) for row in table]
-        table = [[row_headers[i]] + row for i, row in enumerate(table)]
-
-    if headers is None:
-        t = tabulate(table, tablefmt=tablefmt)
-    else:
-        t = tabulate(table, headers, tablefmt=tablefmt)
-
-    print(t)
-
-
-def progress(msg, width=None):
-    """Ouput the progress of something on the same line."""
-    if not width:
-        width = len(msg)
-    print('\b' * width + msg, end='')
-    sys.stdout.flush()
+        table = [[self.labels[i]] + row for i, row in enumerate(table)]
+        t = tabulate(table, self.labels, tablefmt=tablefmt)
+        return str(t)
 
 
 class Score(object):
@@ -79,93 +77,103 @@ class Score(object):
     def acc(self):
         return self._acc * 100
 
+    def acc_str(self):
+        return '{:2.2f}%'.format(self.acc())
+
+
+class Progress(object):
+    def __init__(self, n, spaces=8):
+        template = ['Progress: {:3.1f}%',
+                    'Global accuracy: {:2.2f}%,',
+                    'Known accuracy: {:2.2f}%,',
+                    'Unknown accuracy: {:2.2f}%']
+        self.template = (' ' * spaces).join(template)
+
+        self.headers = ['Global accuracy',
+                        'Known words accuracy',
+                        'Unknown words accuracy']
+        self.n = n
+        self.i = 0
+        self.global_score = Score()
+        self.known_score = Score()
+        self.unknown_score = Score()
+
+    def update_scores(self, hits_sent, hits_known):
+        sum_hits_sent = sum(hits_sent)
+        sum_hits_known = sum(hits_known)
+
+        self.global_score.update(sum_hits_sent, len(sent))
+        self.known_score.update(sum_hits_known, len(hits_known))
+        self.unknown_score.update(sum_hits_sent - sum_hits_known,
+                                  len(hits_sent) - len(hits_known))
+
+    def show(self):
+        msg = (self.template.format(float(self.i) * 100 / self.n,
+                                    self.global_score.acc(),
+                                    self.known_score.acc(),
+                                    self.unknown_score.acc()))
+        print(msg, end='\r')
+        sys.stdout.flush()
+        self.i += 1
+        if self.i == self.n:
+            print()  # Avoid next print to be on the same line
+
+    def print_scores(self, tablefmt='fancy_grid'):
+        scores = (self.global_score, self.known_score, self.unknown_score)
+        table = [[s.acc_str() for s in scores]]
+        t = tabulate(table, self.headers, tablefmt=tablefmt)
+        print(t)
+
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
-    # load the model
+    # Load the model
     filename = opts['-i']
     f = open(filename, 'rb')
     model = pickle.load(f)
     f.close()
 
-    # load the data
+    # Get the output filename, if any
+    output_filename = opts['-o']
+    should_show_cm = output_filename is None or '.png' not in output_filename
+    should_savefig = not should_show_cm
+
+    # Load the data
     files = '3LB-CAST/.*\.tbf\.xml'
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
     sents = list(corpus.tagged_sents())
 
-    # tag
-    global_score = Score()
-    known_score = Score()
-    unknown_score = Score()
-    n = len(sents)
+    # Initialize scores
+    progress = Progress(len(sents))
 
     y_true = []
     y_pred = []
     for i, sent in enumerate(sents):
-        word_sent, gold_tag_sent = zip(*sent)
+        word_sent, true_tags = zip(*sent)
+        pred_tags = model.tag(word_sent)
+        assert len(pred_tags) == len(true_tags), i
 
-        model_tag_sent = model.tag(word_sent)
-        assert len(model_tag_sent) == len(gold_tag_sent), i
-
-        # Global score
-        hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
-        sum_hits_sent = sum(hits_sent)
-
-        global_score.update(sum_hits_sent, len(sent))
-
-        # Known and unknown words score
+        hits_sent = [m == g for m, g in zip(pred_tags, true_tags)]
         hits_known = [hits_sent[j] for j, word in enumerate(word_sent) if
                       not model.unknown(word)]
-        sum_hits_known = sum(hits_known)
 
-        known_score.update(sum_hits_known, len(hits_known))
+        progress.update_scores(hits_sent, hits_known)
 
-        unknown_score.update(sum_hits_sent - sum_hits_known,
-                             len(hits_sent) - len(hits_known))
+        y_true += [t for p, t in zip(pred_tags, true_tags) if p != t]
+        y_pred += [p for p, t in zip(pred_tags, true_tags) if p != t]
 
-        template = ['Progress: {:3.1f}%',
-                    'Global accuracy: {:2.2f}%,',
-                    'Known accuracy: {:2.2f}%,',
-                    'Unknown accuracy: {:2.2f}%']
+        progress.show()
 
-        template = (' ' * TAB_SPACES).join(template)
+    progress.print_scores()
 
-        progress(template.format(float(i) * 100 / n,
-                                 global_score.acc(),
-                                 known_score.acc(),
-                                 unknown_score.acc()))
-        for j, is_hit in enumerate(hits_sent):
-            # If it is an error then add it to the list
-            if not is_hit:
-                y_true.append(gold_tag_sent[j])
-                y_pred.append(model_tag_sent[j])
-
-    print('')
-    headers = ['Global accuracy',
-               'Known words accuracy',
-               'Unknown words accuracy']
-
-    scores = (global_score, known_score, unknown_score)
-    table = [['{:2.2f}%'.format(s.acc()) for s in scores]]
-
-    print_table(table, headers)
-
-    # The labels is the set of all labels, but they must be sorted
-    # to avoid random behavior
     labels = set(y_true).union(set(y_pred))
     labels = sorted(labels)
 
-    cm = confusion_matrix(y_true, y_pred, labels)
-    # Normalize by the total amount of errors
-    cm = np.round(cm / np.sum(cm), 2)
+    cm = ConfusionMatrix(y_true, y_pred, labels, True)
+    cm.plot()
 
-    print_table(cm * 100, labels, labels)
-
-    plot_confusion_matrix(cm, labels)
-
-    output_filename = opts['-o']
-    if output_filename is not None and '.png' in output_filename:
-        plt.savefig(output_filename)
-    else:
-        plt.show()
+    if should_show_cm:
+        cm.show()
+    if should_savefig:
+        cm.savefig(output_filename)
