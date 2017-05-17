@@ -23,27 +23,24 @@ TAB_SPACES = 8  # Output formatting
 
 
 def plot_confusion_matrix(cm, labels, title='Confusion matrix',
-                          cmap=plt.cm.Greens):
+                          ylabel='True Tag', xlabel='Predicted Tag'):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    FONTSIZE = 10
-    ROTATION = 90
-    INTERPOLATION = 'nearest'
-    YLABEL = 'True Tag'
-    XLABEL = 'Predicted Tag'
+    np.set_printoptions(precision=2)
 
-    plt.imshow(cm, interpolation=INTERPOLATION, cmap=cmap)
+    plt.figure(figsize=(10, 10), dpi=110)
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Greens)
     plt.title(title)
     plt.colorbar()
-    tick_marks = np.arange(len(labels))
-    plt.xticks(tick_marks, labels, rotation=ROTATION, fontsize=FONTSIZE)
-    plt.yticks(tick_marks, labels, fontsize=FONTSIZE)
 
-    plt.tight_layout()
-    plt.xlabel(XLABEL)
-    plt.ylabel(YLABEL)
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=90, fontsize=9)
+    plt.yticks(tick_marks, labels, fontsize=9)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
 
 def print_table(table, headers=None, row_headers=None):
@@ -165,8 +162,6 @@ if __name__ == '__main__':
 
     print_table(cm * 100, labels, labels)
 
-    np.set_printoptions(precision=2)
-    plt.figure()
     plot_confusion_matrix(cm, labels)
 
     output_filename = opts['-o']
