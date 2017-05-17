@@ -18,12 +18,6 @@ class HMM:
         trans -- transition probabilities dictionary.
         out -- output probabilities dictionary.
         """
-        def to_default_dict(d):
-            result = defaultdict(lambda: defaultdict(float))
-            for k, v in d.items():
-                result[k] = defaultdict(float, v)
-            return result
-
         self.n = n
         self._tagset = tagset
         self._out = out
