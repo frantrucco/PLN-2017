@@ -25,14 +25,14 @@ class HMM:
             return result
 
         self.n = n
-        self.tagset = tagset
-        self.out = to_default_dict(out)
-        self.trans = to_default_dict(trans)
+        self._tagset = tagset
+        self._out = to_default_dict(out)
+        self._trans = to_default_dict(trans)
 
     def tagset(self):
         """Returns the set of tags.
         """
-        return self.tagset
+        return self._tagset
 
     def trans_prob(self, tag, prev_tags):
         """Probability of a tag.
@@ -40,7 +40,7 @@ class HMM:
         tag -- the tag.
         prev_tags -- iterable with the previous n-1 tags
         """
-        return self.trans[tuple(prev_tags)][tag]
+        return self._trans[tuple(prev_tags)][tag]
 
     def log_trans_prob(self, tag, prev_tags):
         """Log probability of a tag.
@@ -56,7 +56,7 @@ class HMM:
         word -- the word.
         tag -- the tag.
         """
-        return self.out[tag][word]
+        return self._out[tag][word]
 
     def log_out_prob(self, word, tag):
         """Log probability of a word given a tag.
@@ -154,7 +154,7 @@ class ViterbiTagger:
         hmm = self.hmm
         n = hmm.n
         inf = float('inf')
-        tagset = hmm.tagset
+        tagset = hmm.tagset()
 
         self._pi = pi = defaultdict(lambda: defaultdict(tuple))
 
@@ -234,26 +234,31 @@ class MLHMM(HMM):
         # trans -- transition probabilities dictionary.
         # out -- output probabilities dictionary.
         self.n = n
-        self.addone = addone
+        self._addone = addone
 
-        self.tagset = {tag for sent in tagged_sents for _, tag in sent}
-        self.wordset = {word for sent in tagged_sents for word, _ in sent}
+        self._tagset = {tag for sent in tagged_sents for _, tag in sent}
+        self._wordset = {word for sent in tagged_sents for word, _ in sent}
 
-        # Generator to save memory
-        wordtags = (wt for s in tagged_sents for wt in s)
-        self.wordtag_count = defaultdict(float, Counter(wordtags))
+        wordtags = [wt for s in tagged_sents for wt in s]
+        self._wordtag_count = defaultdict(float, Counter(wordtags))
 
-        # Create a ngram and (n-1)gram tag counter
-        self.tag_gram_count = defaultdict(float)
+        # Create a ngram (n-1)gram and 1gram tag counter
+        # 1gram counts are required in out_prob
+        if n > 2:
+            # Only count 1grams if they will not be counted (n > 2)
+            tags = [(t,) for s in tagged_sents for _, t in s]
+            self._tag_gram_count = defaultdict(float, Counter(tags))
+        else:
+            self._tag_gram_count = defaultdict(float)
 
+        # Count ngram, n-1gram
         for sent in tagged_sents:
             tags = [tag for _, tag in sent]
             tags = self.add_opening_and_closing_tags(tags)
-
             for i in range(len(sent) + 1):
                 ngram = tuple(tags[i: i + n])
-                self.tag_gram_count[ngram] += 1.0
-                self.tag_gram_count[ngram[:-1]] += 1.0
+                self._tag_gram_count[ngram] += 1.0
+                self._tag_gram_count[ngram[:-1]] += 1.0
 
         self.tagger = ViterbiTagger(self)
 
@@ -262,18 +267,14 @@ class MLHMM(HMM):
 
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
-        # Avoid creating new default values in defaultdict, just return the
-        # default value (0.0)
-        if tokens in self.tag_gram_count:
-            return self.tag_gram_count[tokens]
-        return 0.0
+        return self._tag_gram_count[tokens]
 
     def unknown(self, word):
         """Check if a word is unknown for the model.
 
         word -- the word.
         """
-        return word not in self.wordset
+        return word not in self._wordset
 
     def trans_prob(self, tag, prev_tags=None):
         """Probability of a tag.
@@ -285,12 +286,12 @@ class MLHMM(HMM):
             prev_tags = tuple()
 
         tcount = self.tcount
-        V = len(self.tagset)
+        V = len(self._tagset)
 
         prev_tags = tuple(prev_tags)
         tags = prev_tags + (tag,)
 
-        if self.addone:
+        if self._addone:
             return (tcount(tags) + 1.0) / (tcount(prev_tags) + V)
         else:
             return tcount(tags) / tcount(prev_tags)
@@ -304,9 +305,9 @@ class MLHMM(HMM):
         tag_count = self.tcount((tag,))
 
         if self.unknown(word) or tag_count == 0:
-            return 1.0 / len(self.wordset)
+            return 1.0 / len(self._wordset)
         else:
-            return self.wordtag_count[(word, tag)] / tag_count
+            return self._wordtag_count[(word, tag)] / tag_count
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
