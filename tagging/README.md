@@ -84,8 +84,8 @@ difíciles de leer.
 | baseline     | 5s                     | 2s                  |
 | mlhmm n=1    | 6s                     | 8s                  |
 | mlhmm n=2    | 6s                     | 18s                 |
-| mlhmm n=3    | 6s                     | 96s                 |
-| mlhmm n=4    | 6s                     | 746s                |
+| mlhmm n=3    | 6s                     | 1m36s               |
+| mlhmm n=4    | 6s                     | 12m26s              |
 | memm n=1     | 5m22s                  | 15s                 |
 | memm n=2     | 6m22s                  | 17s                 |
 | memm n=3     | 5m49s                  | 18s                 |
