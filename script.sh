@@ -9,8 +9,9 @@ declare -a models=('mlhmm' 'memm' 'memmmnb' 'memmlsvc')
 
 function evaluate {
     name=$1
-    echo $name
     echo $name'\n' >> $outputfile
+    echo python $evalscript -i $results/$name.pickle -o $images/$name.png --no-progress;
+
     python $evalscript -i $results/$name.pickle -o $images/$name.png --no-progress >> $outputfile;
     echo '\n' >> $outputfile
     sleep 1;
@@ -31,20 +32,20 @@ function evaluate_all {
 function train {
     model=$1
     n=$2
-    echo $model$n
-    python $trainscript -m $model -n $n -o $results/$model$n.pickle;
+    echo python $trainscript -m $model -n $n -o $results/$model$n.pickle;
+    time python $trainscript -m $model -n $n -o $results/$model$n.pickle;
     sleep 1;
 }
 
 function train_all {
     model='base'
-    python $trainscript -m $model -o $results/$model.pickle;
+    echo python $trainscript -m $model -o $results/$model.pickle;
+    time python $trainscript -m $model -o $results/$model.pickle;
     sleep 1;
 
     for model in "${models[@]}"; do
         for n in 1 2 3 4; do
-            echo $model$i;
-            train $model $i
+            train $model $n
         done
     done
 }
