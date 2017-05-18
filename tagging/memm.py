@@ -53,7 +53,7 @@ class MEMM:
         """
         n = self.n
         words, tags = zip(*tagged_sent)
-        tags = ('<s>') * (n - 1) + tuple(tags)
+        tags = ('<s>',) * (n - 1) + tuple(tags)
         indexes = list(range(len(tagged_sent)))
         prev_tags = [tags[i: i + n - 1] for i in indexes]
 
