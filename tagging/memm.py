@@ -15,6 +15,28 @@ class MEMM:
         self.n = n
         self._wordset = {w for s in tagged_sents for w, _ in s}
 
+        features = [tf.word_isdigit,
+                    tf.word_istitle,
+                    tf.word_isupper,
+                    tf.word_lower]
+
+        # Add all features from the previous word
+        features += [tf.PrevWord(f) for f in features]
+
+        # Add all possible previous igrams (i in 1,...,n-1)
+        # Note that there are at most n-1grams (ngrams would include the
+        # current word or would underflow the limits of the sentence)
+        features += [tf.NPrevTags(i) for i in range(1, n)]
+
+        # This is way too simple
+        vectorizer = ('Vectorizer', Vectorizer(features=features))
+        classifier = ('Classifier', LogisticRegression())
+        self.pipeline = Pipeline([vectorizer, classifier])
+
+        histories = self.sent_histories(tagged_sents)
+        tags = self.sents_tags(tagged_sents)
+        self.pipeline.fit(histories, tags)
+
     def sents_histories(self, tagged_sents):
         """
         Iterator over the histories of a corpus.
