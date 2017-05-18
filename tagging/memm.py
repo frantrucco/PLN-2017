@@ -81,12 +81,23 @@ class MEMM:
 
         sent -- the sentence.
         """
+        tags = [None] * len(sent)
+        prev_tags = ('<s>',) * (self.n - 1)
+
+        for i in range(len(sent)):
+            h = tf.History(sent, prev_tags, i)
+            tags[i] = self.tag_history(h)
+            prev_tags = prev_tags[1:] + (tags[i],)
+
+        return tags
 
     def tag_history(self, h):
         """Tag a history.
 
         h -- the history.
         """
+        # Predict returns a list with a single element
+        return self.pipeline.predict([h])[0]
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
