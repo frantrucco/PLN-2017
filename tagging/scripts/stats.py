@@ -28,7 +28,7 @@ def second(x): return x[1]
 
 
 def print_table(table, headers=None):
-    tablefmt = 'fancy_grid'
+    tablefmt = 'orgtbl'
     if headers is None:
         t = tabulate(table, tablefmt=tablefmt)
     else:
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         words.sort(reverse=True)
 
         _, most_frequent_words = list(zip(*words[:NUMBER_OF_WORDS]))
-
+        most_frequent_words = ', '.join(most_frequent_words)
         table.append([level, len(words), perc, most_frequent_words])
 
     headers = ['Level', 'Frequency', 'Percentage of total',
