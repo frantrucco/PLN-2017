@@ -11,10 +11,12 @@ El script obtiene las estadísticas del corpus Ancora (versión 2.0).
 A continuación se muestran las mismas:
 
 
-| Number of Sentences |  17379 |
-| Number of tokens    | 517269 |
-| Vocabulary size     |  46482 |
-| Tag Vocabulary size |     81 |
+| Tipo                           |  Valor |
+|--------------------------------|--------|
+| Numero de oraciones            |  17379 |
+| Número de tokens               | 517269 |
+| Tamaño del vocabulario         |  46482 |
+| Tamaño del vocabulario de tags |     81 |
 
 
 | Tag | Frecuencia | Porcentaje | Palabras más frecuentes con ese tag         |
