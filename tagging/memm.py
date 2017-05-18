@@ -1,41 +1,46 @@
 from featureforge.vectorizer import Vectorizer
 from itertools import chain
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 import tagging.features as tf
 
 
 class MEMM:
 
-    def __init__(self, n, tagged_sents):
+    def __init__(self, n, tagged_sents, features=None, classifier=None):
         """
         n -- order of the model.
         tagged_sents -- list of sentences, each one being a list of pairs.
         """
         self.n = n
         self._wordset = {w for s in tagged_sents for w, _ in s}
+        self.histories = list(self.sents_histories(tagged_sents))
+        self.tags = list(self.sents_tags(tagged_sents))
+        if features is None:
+            features = [tf.word_isdigit,
+                        tf.word_istitle,
+                        tf.word_isupper,
+                        tf.word_lower]
 
-        features = [tf.word_isdigit,
-                    tf.word_istitle,
-                    tf.word_isupper,
-                    tf.word_lower]
+            # Add all features from the previous word
+            features += [tf.PrevWord(f) for f in features]
 
-        # Add all features from the previous word
-        features += [tf.PrevWord(f) for f in features]
+            # Add all possible previous igrams (i in 1,...,n-1)
+            # Note that there are at most n-1grams (ngrams would include the
+            # current word or would underflow the limits of the sentence)
+            features += [tf.NPrevTags(i) for i in range(1, n)]
 
-        # Add all possible previous igrams (i in 1,...,n-1)
-        # Note that there are at most n-1grams (ngrams would include the
-        # current word or would underflow the limits of the sentence)
-        features += [tf.NPrevTags(i) for i in range(1, n)]
+        if classifier is None:
+            classifier = ('Classifier', LogisticRegression())
+        else:
+            classifier = ('Classifier', classifier)
 
-        # This is way too simple
         vectorizer = ('Vectorizer', Vectorizer(features=features))
-        classifier = ('Classifier', LogisticRegression())
         self.pipeline = Pipeline([vectorizer, classifier])
 
-        histories = list(self.sents_histories(tagged_sents))
-        tags = list(self.sents_tags(tagged_sents))
-        self.pipeline.fit(histories, tags)
+        self.pipeline.fit(self.histories, self.tags)
 
     def sents_histories(self, tagged_sents):
         """
@@ -51,6 +56,8 @@ class MEMM:
 
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
+        if tagged_sent == []:
+            return iter([])
         n = self.n
         words, tags = zip(*tagged_sent)
         words = list(words)
@@ -105,3 +112,15 @@ class MEMM:
         w -- the word.
         """
         return w not in self._wordset
+
+
+class MEMMMultinomialNaiveBayes(MEMM):
+    def __init__(self, n, tagged_sents, features=None):
+        classifier = MultinomialNB()
+        super().__init__(n, tagged_sents, features, classifier)
+
+
+class MEMMLinearSVC(MEMM):
+    def __init__(self, n, tagged_sents, features=None):
+        classifier = LinearSVC()
+        super().__init__(n, tagged_sents, features, classifier)
