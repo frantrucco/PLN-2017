@@ -8,6 +8,9 @@ Options:
   -m <model>    Model to use [default: base]:
                   base: Baseline
                   mlhmm: Hidden Markov Model
+                  memm: MEMM
+                  memmlsvc: LinearSVC
+                  memmmnb: MultinomialNB
   -n <n>        Order of the model [default: 3]
   -o <file>     Output model file.
   -h --help     Show this screen.
@@ -18,11 +21,17 @@ import pickle
 from corpus.ancora import SimpleAncoraCorpusReader
 from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
+from tagging.memm import MEMM
+from tagging.memm import MEMMMultinomialNaiveBayes
+from tagging.memm import MEMMLinearSVC
 
 
 models = {
     'base': BaselineTagger,
-    'mlhmm': MLHMM
+    'mlhmm': MLHMM,
+    'memm': MEMM,
+    'memmlsvc': MEMMLinearSVC,
+    'memmmnb': MEMMMultinomialNaiveBayes
 }
 
 
