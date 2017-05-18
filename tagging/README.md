@@ -6,15 +6,12 @@ El script obtiene las estadísticas del corpus Ancora (versión 2.0).
 A continuación se muestran las mismas:
 
 
-|---------------------|--------|
 | Number of Sentences |  17379 |
 | Number of tokens    | 517269 |
 | Vocabulary size     |  46482 |
 | Tag Vocabulary size |     81 |
-|---------------------|--------|
 
 
-|-----|------------|------------|---------------------------------------------|
 | Tag | Frecuencia | Porcentaje | Palabras más frecuentes con ese tag         |
 |-----|------------|------------|---------------------------------------------|
 | sps |      70141 |   0.135599 | de, en, a, con, por                         |
@@ -27,10 +24,8 @@ A continuación se muestran las mismas:
 | np0 |      29113 |   0.056282 | Gobierno, España, PP, Barcelona, Madrid     |
 | fp  |      17513 |   0.033857 | .                                           |
 | rg  |      15333 |   0.029642 | más, hoy, también, ayer, ya                 |
-|-----|------------|------------|---------------------------------------------|
 
 
- |-----|---------------------------------------------------|
  | Tag | Significado                                       |
  |-----|---------------------------------------------------|
  | sps | Adposición de tipo Preposición de número Singular |
@@ -43,10 +38,8 @@ A continuación se muestran las mismas:
  | np0 | Nombre Propio                                     |
  | fp  | Signo de puntuación (punto)                       |
  | rg  | Advervio General                                  |
- |-----|---------------------------------------------------|
 
 
-|-------|-----------|---------------------|-----------------------------------|
 | Level | Frequency | Percentage of total | Most frequent words in this level |
 |-------|-----------|---------------------|-----------------------------------|
 |     1 |     43889 |            0.944215 | ,, el, en, con, por               |
@@ -55,7 +48,6 @@ A continuación se muestran las mismas:
 |     4 |        26 |            0.000559 | a, dos, este, tres, todo          |
 |     5 |         6 |            0.000129 | de, mismo, cinco, medio, ocho     |
 |     6 |         4 |             8.6e-05 | que, una, como, uno               |
-|-------|-----------|---------------------|-----------------------------------|
 
 
 # Ejercicio 2: Baseline Tagger
