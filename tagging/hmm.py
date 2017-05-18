@@ -241,15 +241,10 @@ class MLHMM(HMM):
         wordtags = [wt for s in tagged_sents for wt in s]
         self._wordtag_count = dict(Counter(wordtags))
 
-        # Create a ngram (n-1)gram and 1gram tag counter
-        # 1gram counts are required in out_prob
-        if n > 2:
-            # Only count 1grams if they will not be counted (n > 2)
-            tags = [(t,) for s in tagged_sents for _, t in s]
-            self._tag_gram_count = defaultdict(float, Counter(tags))
-        else:
-            self._tag_gram_count = defaultdict(float)
+        tags = [t for s in tagged_sents for _, t in s]
+        self._tag_count = dict(Counter(tags))
 
+        self._tag_gram_count = defaultdict(float)
         # Count ngram, n-1gram
         for sent in tagged_sents:
             tags = [tag for _, tag in sent]
@@ -303,7 +298,7 @@ class MLHMM(HMM):
         word -- the word.
         tag -- the tag.
         """
-        tag_count = self.tcount((tag,))
+        tag_count = self._tag_count[tag]
 
         if self.unknown(word) or tag_count == 0:
             return 1.0 / len(self._wordset)
