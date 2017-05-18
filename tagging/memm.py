@@ -33,8 +33,8 @@ class MEMM:
         classifier = ('Classifier', LogisticRegression())
         self.pipeline = Pipeline([vectorizer, classifier])
 
-        histories = self.sents_histories(tagged_sents)
-        tags = self.sents_tags(tagged_sents)
+        histories = list(self.sents_histories(tagged_sents))
+        tags = list(self.sents_tags(tagged_sents))
         self.pipeline.fit(histories, tags)
 
     def sents_histories(self, tagged_sents):
