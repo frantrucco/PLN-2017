@@ -1,3 +1,9 @@
+from featureforge.vectorizer import Vectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+import tagging.features as tf
+
+
 class MEMM:
 
     def __init__(self, n, tagged_sents):
