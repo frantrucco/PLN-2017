@@ -1,11 +1,13 @@
 """Evaulate a parser.
 
 Usage:
-  eval.py -i <file>
+  eval.py -i <file> [-m <m>] [-n <n>]
   eval.py -h | --help
 
 Options:
   -i <file>     Parsing model file.
+  -m <m>        Parse only sentences of length <= <m>.
+  -n <n>        Parse only <n> sentences (useful for profiling).
   -h --help     Show this screen.
 """
 from docopt import docopt
@@ -38,6 +40,16 @@ if __name__ == '__main__':
     files = '3LB-CAST/.*\.tbf\.xml'
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
     parsed_sents = list(corpus.parsed_sents())
+
+    if opts['-m'] is not None:
+        # Parse only sentences of length <= <m>.
+        m = int(opts['-m'])
+        parsed_sents = filter(lambda sent: len(sent) <= m, parsed_sents)
+
+    if opts['-n'] is not None:
+        # Parse only <n> sentences
+        n = int(opts['-n'])
+        parsed_sents = parsed_sents[:n]
 
     print('Parsing...')
     hits, total_gold, total_model = 0, 0, 0
