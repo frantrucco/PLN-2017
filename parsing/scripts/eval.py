@@ -74,7 +74,8 @@ if __name__ == '__main__':
         rec = float(hits) / total_gold * 100
         f1 = 2 * prec * rec / (prec + rec)
 
-        progress(format_str.format(float(i+1) * 100 / n, i+1, n, prec, rec, f1))
+        progress(format_str.format(float(i+1) * 100 / n, i+1,
+                                   n, prec, rec, f1))
 
     print('')
     print('Parsed {} sentences'.format(n))
