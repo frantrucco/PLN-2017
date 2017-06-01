@@ -19,12 +19,61 @@ from corpus.ancora import SimpleAncoraCorpusReader
 from parsing.util import spans
 
 
-def progress(msg, width=None):
-    """Ouput the progress of something on the same line."""
-    if not width:
-        width = len(msg)
-    print('\b' * width + msg, end='')
-    sys.stdout.flush()
+class Progress():
+    def __init__(self, labeled, unlabeled, n):
+        self.fmt = '{:3.1f}% ({}/{})' + \
+            ' L: (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)' + \
+            ' U: (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
+        self.labeled = labeled
+        self.unlabeled = unlabeled
+        self.n = n
+
+    def progress(msg, width=None):
+        """Ouput the progress of something on the same line."""
+        if not width:
+            width = len(msg)
+        print('\b' * width + msg, end='')
+        sys.stdout.flush()
+
+    def print_progress(self, i):
+        l = self.labeled
+        u = self.unlabeled
+        n = self.n
+        Progress.progress(self.fmt.format(float(i+1) * 100 / n, i+1, n,
+                                          l.prec, l.rec, l.f1,
+                                          u.prec, u.rec, u.f1))
+
+    def print_stats(score):
+        print('  Precision: {:2.2f}% '.format(score.prec))
+        print('  Recall: {:2.2f}% '.format(score.rec))
+        print('  F1: {:2.2f}% '.format(score.f1))
+
+    def print_final_scores(self):
+        print()
+        print()
+        print('Parsed {} sentences'.format(n))
+        print('Labeled')
+        Progress.print_stats(self.labeled)
+        print('Unlabeled')
+        Progress.print_stats(self.unlabeled)
+
+
+class Score():
+    def __init__(self):
+        self.hits = 0
+        self.total_gold = 0
+        self.total_model = 0
+        self.prec = 0
+        self.rec = 0
+        self.f1 = 0
+
+    def update(self, gold_spans, model_spans):
+        self.hits += len(gold_spans & model_spans)
+        self.total_gold += len(gold_spans)
+        self.total_model += len(model_spans)
+        self.prec = float(self.hits) / self.total_model * 100
+        self.rec = float(self.hits) / self.total_gold * 100
+        self.f1 = 2 * self.prec * self.rec / (self.prec + self.rec)
 
 
 if __name__ == '__main__':
@@ -52,34 +101,29 @@ if __name__ == '__main__':
         parsed_sents = parsed_sents[:n]
 
     print('Parsing...')
-    hits, total_gold, total_model = 0, 0, 0
+
+    labeled = Score()
+    unlabeled = Score()
     n = len(parsed_sents)
-    format_str = '{:3.1f}% ({}/{}) (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
-    progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
+
+    p = Progress(labeled, unlabeled, n)
+    p.print_progress(n)
     for i, gold_parsed_sent in enumerate(parsed_sents):
         tagged_sent = gold_parsed_sent.pos()
 
-        # parse
+        # Parse
         model_parsed_sent = model.parse(tagged_sent)
 
-        # compute labeled scores
+        # Compute labeled scores
         gold_spans = spans(gold_parsed_sent, unary=False)
         model_spans = spans(model_parsed_sent, unary=False)
-        hits += len(gold_spans & model_spans)
-        total_gold += len(gold_spans)
-        total_model += len(model_spans)
+        labeled.update(gold_spans, model_spans)
 
-        # compute labeled partial results
-        prec = float(hits) / total_model * 100
-        rec = float(hits) / total_gold * 100
-        f1 = 2 * prec * rec / (prec + rec)
+        # Ignore label just take in account the interval
+        gold_spans = set(map(lambda x: x[1:], gold_spans))
+        model_spans = set(map(lambda x: x[1:], model_spans))
+        unlabeled.update(gold_spans, model_spans)
 
-        progress(format_str.format(float(i+1) * 100 / n, i+1,
-                                   n, prec, rec, f1))
+        p.print_progress(i)
 
-    print('')
-    print('Parsed {} sentences'.format(n))
-    print('Labeled')
-    print('  Precision: {:2.2f}% '.format(prec))
-    print('  Recall: {:2.2f}% '.format(rec))
-    print('  F1: {:2.2f}% '.format(f1))
+    p.print_final_scores()
