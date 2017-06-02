@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import product
 from nltk.tree import Tree
 
 
@@ -25,7 +26,7 @@ class CKYParser:
         """
         return (str(p.lhs()), tuple(map(str, p.rhs())), p.logprob())
 
-    def binary_prods(self, Bs, Cs):
+    def binary_rules(self, Bs, Cs):
         """Return a list of 4-tuples of the form (A, B, C, probability of rule)
 
         Create a list of 4-tuples containing all rules of the from A -> B C
@@ -36,15 +37,14 @@ class CKYParser:
         """
         from_rhs = self.from_rhs
 
-        binary_prods = []
-        for rhs in from_rhs.keys():
-            if len(rhs) != 2:
-                continue
-            B, C = rhs
-            binary_prods += [(A, B, C, prob)
-                             for A, prob in from_rhs[rhs]
-                             if B in Bs and C in Cs]
-        return binary_prods
+        binary_rules = []
+        for rhs in product(Bs, Cs):
+            if rhs in from_rhs and len(rhs) == 2:
+                B, C = rhs
+                binary_rules += [(A, B, C, prob)
+                                 for A, prob in from_rhs[rhs]
+                                 if B in Bs and C in Cs]
+        return binary_rules
 
     def parse(self, sent):
         """Parse a sequence of terminals.
@@ -74,11 +74,11 @@ class CKYParser:
                 for split in range(begin, end):
                     left, right = (begin, split), (split + 1, end)
 
-                    # All binary productions of the form A -> B C where
+                    # All binary production rules of the form A -> B C where
                     # B is in score[left] and C is in score[right]
-                    binary_prods = self.binary_prods(score[left], score[right])
+                    binary_rules = self.binary_rules(score[left], score[right])
 
-                    for A, B, C, rule_prob in binary_prods:
+                    for A, B, C, rule_prob in binary_rules:
                         prob = score[left][B]
                         prob += score[right][C]
                         new_prob = prob + rule_prob
