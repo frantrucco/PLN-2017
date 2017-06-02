@@ -1,13 +1,14 @@
 """Evaulate a parser.
 
 Usage:
-  eval.py -i <file> [-m <m>] [-n <n>]
+  eval.py -i <file> [-m <m>] [-n <n>] [--succint]
   eval.py -h | --help
 
 Options:
-  -i <file>     Parsing model file.
-  -m <m>        Parse only sentences of length <= <m>.
-  -n <n>        Parse only <n> sentences (useful for profiling).
+  -i <file>      Parsing model file.
+  -m <m>         Parse only sentences of length <= <m>.
+  -n <n>         Parse only <n> sentences (useful for profiling).
+  --succint         Do not show progress
   -h --help     Show this screen.
 """
 from docopt import docopt
@@ -44,9 +45,9 @@ class Progress():
                                           u.prec, u.rec, u.f1))
 
     def print_stats(score):
-        print('  Precision: {:2.2f}% '.format(score.prec))
-        print('  Recall: {:2.2f}% '.format(score.rec))
-        print('  F1: {:2.2f}% '.format(score.f1))
+        print('  Precision: {:2.2f}%'.format(score.prec))
+        print('  Recall: {:2.2f}%'.format(score.rec))
+        print('  F1: {:2.2f}%'.format(score.f1))
 
     def print_final_scores(self):
         print()
@@ -79,13 +80,16 @@ class Score():
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
-    print('Loading model...')
+    succint = opts['--succint']
+    if not succint:
+        print('Loading model...')
     filename = opts['-i']
     f = open(filename, 'rb')
     model = pickle.load(f)
     f.close()
 
-    print('Loading corpus...')
+    if not succint:
+        print('Loading corpus...')
     files = '3LB-CAST/.*\.tbf\.xml'
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
     parsed_sents = list(corpus.parsed_sents())
@@ -93,21 +97,24 @@ if __name__ == '__main__':
     if opts['-m'] is not None:
         # Parse only sentences of length <= <m>.
         m = int(opts['-m'])
-        parsed_sents = filter(lambda sent: len(sent) <= m, parsed_sents)
+        parsed_sents = [s for s in parsed_sents if len(s.leaves()) <= m]
 
     if opts['-n'] is not None:
         # Parse only <n> sentences
         n = int(opts['-n'])
         parsed_sents = parsed_sents[:n]
 
-    print('Parsing...')
+    if not succint:
+        print('Parsing...')
 
     labeled = Score()
     unlabeled = Score()
     n = len(parsed_sents)
 
     p = Progress(labeled, unlabeled, n)
-    p.print_progress(n)
+
+    if not succint:
+        p.print_progress(0)
     for i, gold_parsed_sent in enumerate(parsed_sents):
         tagged_sent = gold_parsed_sent.pos()
 
@@ -124,6 +131,7 @@ if __name__ == '__main__':
         model_spans = set(map(lambda x: x[1:], model_spans))
         unlabeled.update(gold_spans, model_spans)
 
-        p.print_progress(i)
+        if not succint:
+            p.print_progress(i)
 
     p.print_final_scores()
