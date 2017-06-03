@@ -38,12 +38,10 @@ class CKYParser:
         from_rhs = self.from_rhs
 
         binary_rules = []
-        for rhs in product(Bs, Cs):
-            if rhs in from_rhs and len(rhs) == 2:
-                B, C = rhs
+        for B, C in product(Bs, Cs):
+            if (B, C) in self.from_rhs:
                 binary_rules += [(A, B, C, prob)
-                                 for A, prob in from_rhs[rhs]
-                                 if B in Bs and C in Cs]
+                                 for A, prob in from_rhs[(B, C)]]
         return binary_rules
 
     def parse(self, sent):
