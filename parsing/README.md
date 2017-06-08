@@ -83,13 +83,48 @@ luego de n = 2.
 
 # Ejercicio 2: Algoritmo CKY
 
-<!-- TODO:  -->
-<!-- Agregar a los tests un test con una gramática y una oración  -->
-<!-- tal que la oración tenga más de un análisis posible -->
-
-
 Se implementó el algoritmo siguiendo el video de 
   [Dan Jurafsky & Chris Manning](https://www.youtube.com/watch?v=hq80J8kBg-Y).
+
+El test agregado fue: 
+
+"el gato come pescado con sal"
+
+con la gramática:
+
+```
+S -> NP VP              [0.6]
+S -> NPVP PP            [0.4]
+NP -> Det Noun          [1.0]
+NPVP -> NP VP           [1.0]
+PP -> SPS Noun          [1.0]
+VP -> Verb Noun         [0.5]
+VP -> VerbNoun PP       [0.5]
+VerbNoun -> Verb Noun   [1.0]
+Det -> 'el'             [1.0]
+Noun -> 'gato'          [0.3]
+Verb -> 'come'          [1.0]
+Noun -> 'pescado'       [0.3]
+SPS -> 'con'            [1.0]
+Noun -> 'sal'           [0.4]
+```
+
+Esta oración es ambigua bajo esta gramática pues existe más de una
+intepretación posible. A continuación se muestran las dos:
+
+```
+(S (NP (Det el) (Noun gato))
+    (VP (VerbNoun (Verb come) (Noun pescado))
+        (PP (SPS con) (Noun sal))))
+```
+
+y
+
+```
+(S (NPVP (NP (Det el) (Noun gato))
+         (VP (Verb come) (Noun pescado))
+   (PP (SPS con) (Noun sal))))
+```
 
 ## Sobre binary_rules
 
